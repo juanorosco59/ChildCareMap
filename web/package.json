@@ -1,11 +1,14 @@
 {
-  "name": "web",
+  "name": "childcaremap",
   "version": "1.0.0",
-  "description": "",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite preview --port $PORT"
   },
-  "devDependencies": {
-    "vite": "^5.0.0"
+  "dependencies": {
+    "sigma": "^2.2.0",
+    "graphology": "^0.21.1",
+    "graphology-gexf": "^0.3.0"
   }
 }
