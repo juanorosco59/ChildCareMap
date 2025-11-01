@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Graph Viewer</title>
+  <style>
+    html, body, #sigma-container {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+
+<body>
+ 
+  <div style="position: absolute; z-index: 1; padding: 10px;">
+    <button id="zoom-in">Zoom +</button>
+    <button id="zoom-out">Zoom -</button>
+    <button id="zoom-reset">Reset Zoom</button>
+    <label>
+      Labels threshold:
+      <input type="range" id="labels-threshold" min="0" max="10" step="1" />
+    </label>
+  </div>
+  
+  <div id="sigma-container" style="width: 100vw; height: 100vh;"></div>
+
+<script type="module">
+  import main from "./js/mainPro.js";
+  main();
+</script>
+</body>
+</html>
+
+
+
