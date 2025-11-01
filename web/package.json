@@ -2,15 +2,15 @@
   "name": "web",
   "version": "1.0.0",
   "description": "",
-  
-
   "scripts": {
-  "dev": "npx vite",
-  "build": "npx vite build",
-  "start": "npx vite preview --port $PORT"
-},
-
-  "devDependencies": {
-    "vite": "^5.0.0"
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "start": "npx vite preview --port $PORT"
+  },
+  "dependencies": {
+    "vite": "^5.0.0",
+    "sigma": "^2.2.0",
+    "graphology": "^0.21.1",
+    "graphology-gexf": "^0.3.0"
   }
 }
