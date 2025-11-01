@@ -4,11 +4,12 @@
   "description": "",
   "scripts": {
     "dev": "npx vite",
-    "build": "npx vite build",
-    "start": "npx vite preview --port $PORT"
+"build": "vite build",  
+  "start": "serve -s dist -l $PORT" 
   },
   "dependencies": {
     "vite": "^5.0.0",
+    "serve": "^14.2.3", 
     "sigma": "^2.2.0",
     "graphology": "^0.21.1",
     "graphology-gexf": "^0.3.0"
