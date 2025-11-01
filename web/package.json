@@ -2,11 +2,14 @@
   "name": "web",
   "version": "1.0.0",
   "description": "",
+  
+
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview --port $PORT"
-  },
+  "dev": "npx vite",
+  "build": "npx vite build",
+  "start": "npx vite preview --port $PORT"
+},
+
   "devDependencies": {
     "vite": "^5.0.0"
   }
