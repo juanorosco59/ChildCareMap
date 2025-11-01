@@ -1,3 +1,4 @@
+
 {
   "name": "web",
   "version": "1.0.0",
@@ -5,7 +6,7 @@
   "scripts": {
     "dev": "npx vite",
 "build": "vite build",  
-  "start": "serve -s dist -l $PORT" 
+  "start": "vite preview --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
     "vite": "^5.0.0",
