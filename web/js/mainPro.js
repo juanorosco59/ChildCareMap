@@ -9,7 +9,7 @@ export default () => {
   let renderer = null;
 
   // Load external GEXF file
-  fetch("data/arctic.gexf")
+  fetch("/data/arctic.gexf")
     .then((res) => {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return res.text();
