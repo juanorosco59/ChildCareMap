@@ -1,0 +1,329 @@
+/* =======================
+   Reset & Base
+======================= */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root{
+  --sidebar-width: 420px;          /* resize sidebar here */
+  --card-bg: rgba(255,255,255,.95);
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --brand: #0d9488;
+  --shadow: 0 10px 30px rgba(0,0,0,.10);
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --card-bg: rgba(17,24,39,.92);
+    --border: rgba(255,255,255,.08);
+    --text: #e5e7eb;
+    --muted: #a3adc2;
+    --shadow: 0 14px 40px rgba(0,0,0,.45);
+  }
+}
+
+html, body { height: 100%; }
+body{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f9fafb;
+  color: var(--text);
+  overflow: hidden;                /* panel scrolls, page doesn't */
+}
+
+/* =======================
+   Layout: Sidebar + Map
+======================= */
+/* Map: always visible, fills the space to the right of sidebar */
+#sigma-container{
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  height: 100vh;
+  z-index: 1;                      /* below UI elements */
+  background: #fff;
+}
+
+/* Sidebar panel: left column, scrolls internally */
+.dashboard-panel{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  z-index: 2;                      /* above map */
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--card-bg);
+  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 20px rgba(0,0,0,.06);
+}
+.dashboard-container{ display: flex; flex-direction: column; gap: 20px; }
+
+/* =======================
+   Header
+======================= */
+.header{ display: flex; align-items: flex-start; gap: 12px; }
+.logo-icon{
+  width: 48px; height: 48px; border-radius: 8px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--brand); color:#fff; flex-shrink:0;
+}
+.logo-text h1{ font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--text); }
+.logo-text p{ font-size: 14px; color: var(--brand); }
+
+/* =======================
+   Alert
+======================= */
+.alert{
+  display:flex; gap:12px; align-items:flex-start;
+  padding:12px 16px; border-radius:8px; border:1px solid var(--border);
+}
+.alert-critical{ background:#fef2f2; border-color:#fecaca; color:#dc2626; }
+.alert-icon{ flex-shrink:0; margin-top:2px; }
+.alert-content{ font-size:14px; line-height:1.5; }
+.alert-content strong{ font-weight:600; }
+
+/* =======================
+   Stats
+======================= */
+.stats-grid{
+  display:grid; gap:16px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.stat-card{
+  background:#fff; border:1px solid var(--border);
+  border-radius:8px; padding:16px; text-align:center;
+  box-shadow: var(--shadow);
+}
+@media (prefers-color-scheme: dark){
+  .stat-card{ background: rgba(255,255,255,.04); }
+}
+.stat-label{
+  font-size:12px; color: var(--muted);
+  margin-bottom:8px; text-transform:uppercase; letter-spacing:.025em;
+}
+.stat-value{ font-size:28px; font-weight:700; color: var(--text); }
+
+/* =======================
+   Tabs
+======================= */
+.tabs{ width:100%; }
+.tabs-list{
+  display:grid; grid-template-columns: repeat(3,1fr);
+  gap:4px; padding:4px; border:1px solid var(--border); border-radius:8px; background:#fff;
+  box-shadow: var(--shadow);
+}
+@media (prefers-color-scheme: dark){
+  .tabs-list{ background: rgba(255,255,255,.04); }
+}
+.tab-trigger{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 16px; border:none; background:transparent; border-radius:6px;
+  font-size:14px; font-weight:500; color: var(--muted); cursor:pointer; transition: .2s;
+}
+.tab-trigger:hover{ background:#f3f4f6; color: var(--text); }
+.tab-trigger.active{ background:#eef2ff; color:#111827; }
+@media (prefers-color-scheme: dark){
+  .tab-trigger:hover{ background: rgba(255,255,255,.06); }
+  .tab-trigger.active{ background: rgba(79,70,229,.25); color: #fff; }
+}
+.tab-trigger svg{ flex-shrink:0; }
+
+.tab-content{ display:none; margin-top:16px; }
+.tab-content.active{ display:block; }
+.tab-panel{ color: var(--muted); font-size:14px; line-height:1.6; }
+.tab-panel h3{ font-size:18px; font-weight:600; color: var(--text); margin-bottom:8px; }
+
+/* =======================
+   Map Controls (visible)
+======================= */
+/* Support multiple selectors so it works with your existing HTML */
+.map-controls, .graph-controls, #map-controls {
+  position: fixed;
+  bottom: 20px;
+  left: calc(var(--sidebar-width) + 20px);  /* inside map, near sidebar */
+  z-index: 4;                                /* above map */
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 10px 14px;
+}
+
+/* If an old inline z-index was set, force ours to win */
+.map-controls, .graph-controls, #map-controls { z-index: 9999 !important; }
+
+.map-controls button, .graph-controls button, #map-controls button{
+  appearance:none;
+  border:1px solid var(--border);
+  background:#fff; color: var(--text);
+  border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; transition:.2s;
+}
+@media (prefers-color-scheme: dark){
+  .map-controls button, .graph-controls button, #map-controls button{
+    background: rgba(255,255,255,.06);
+  }
+}
+.map-controls button:hover, .graph-controls button:hover, #map-controls button:hover{
+  filter: brightness(1.02);
+}
+.map-controls button:active, .graph-controls button:active, #map-controls button:active{
+  transform: translateY(1px);
+}
+
+.map-controls label, .graph-controls label, #map-controls label{
+  display:flex; align-items:center; gap:6px;
+  font-size:13px; font-weight:600; color: var(--text);
+}
+.map-controls input[type="range"],
+.graph-controls input[type="range"],
+#map-controls input[type="range"]{
+  width: 140px; height: 6px; border-radius: 4px; background: #e5e7eb; outline:none; -webkit-appearance:none;
+  accent-color: var(--brand); cursor:pointer;
+}
+
+/* =======================
+   Responsive
+======================= */
+@media (max-width: 1024px){
+  :root{ --sidebar-width: 360px; }
+}
+@media (max-width: 900px){
+  :root{ --sidebar-width: 100%; }
+
+  .dashboard-panel{
+    height: auto; max-height: 320px;
+    border-right: none; border-bottom: 1px solid var(--border);
+    box-shadow: 0 6px 20px rgba(0,0,0,.06);
+  }
+
+  #sigma-container{
+    top: 320px; left: 0; width: 100vw; height: calc(100vh - 320px);
+  }
+
+  .map-controls, .graph-controls, #map-controls{
+    left: 50%; right: auto; transform: translateX(-50%);
+    bottom: 16px;
+  }
+}
+@media (max-width: 480px){
+  .dashboard-panel{ padding: 12px; }
+  .dashboard-container{ gap: 16px; }
+  .logo-text h1{ font-size: 20px; }
+  .stat-value{ font-size: 22px; }
+  .tabs-list{ grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   FIX: Make sure map controls are visible above the map
+========================================================= */
+.map-controls {
+  position: fixed;
+  bottom: 20px;
+  left: calc(var(--sidebar-width) + 20px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 99999 !important; /* <— key line */
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  padding: 10px 14px;
+}
+
+.map-controls button {
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-controls button:hover {
+  background: #f9fafb;
+}
+
+.map-controls input[type="range"] {
+  width: 120px;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .map-controls {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* ===============================================
+   FINAL FIX — make zoom controls always visible
+=============================================== */
+.map-controls {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  left: auto !important;
+  top: auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+
+  background: rgba(255, 255, 255, 0.97) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  padding: 10px 14px !important;
+
+  z-index: 2147483647 !important; /* Above any canvas layer */
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Button styling */
+.map-controls button {
+  border: 1px solid #e5e7eb !important;
+  background: white !important;
+  color: #111827 !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.map-controls button:hover {
+  background: #f3f4f6 !important;
+}
+
+.map-controls input[type="range"] {
+  width: 120px !important;
+  accent-color: #0d9488 !important;
+}
+
+/* Debug outline (remove once you see it) */
+.map-controls {
+  outline: 3px solid red !important;
+}
+
+/* Mobile: center bottom */
+@media (max-width: 900px) {
+  .map-controls {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+}
