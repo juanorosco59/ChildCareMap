@@ -5,6 +5,12 @@ import { parse } from "graphology-gexf/browser";
 // Importa Sigma para renderizar el grafo
 import Sigma from "sigma";
 
+// Mdulos para mapas
+import bindLeafletLayer from "@sigma/layer-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+
 export default function main() {
   // Obtiene todos los botones de pestañas (Resumen / Mapa / Datos)
   const triggers = [...document.querySelectorAll(".tab-trigger")];
@@ -52,16 +58,16 @@ export default function main() {
       // Si el backend trae una clave message, se muestra en un bloque limpio
       if (typeof result === "object" && result !== null && result.message) {
         contentToDisplay = `
-          <div style="padding:20px; text-align:center; border:1px solid #ddd; background:#ffffff;">
+          <div style="padding:20px; text-align:center; border:1px solid #0b0a0aff; background:#ffffff;">
             <h3 style="margin:0 0 8px 0; color:#111;">Mensaje del Backend</h3>
             <p style="font-size:1.05em; color:#333; margin:0;">${result.message}</p>
           </div>`;
       } else {
         // Si no hay message, se muestra el JSON crudo de manera legible
         contentToDisplay = `
-          <div style="padding:14px; border:1px solid #ddd; background:#ffffff;">
-            <h3 style="margin:0 0 8px 0; color:#111;">Datos (raw)</h3>
-            <pre style="margin:0; white-space:pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
+          <div style="padding:14px; border:1px solid #100d0dff; background:#ffffff;">
+            <h3 style="margin:0 0 8px 0; color:#111;">Respuesta - FastAPI Python</h3>
+            <pre style="margin:0; color:#111">${JSON.stringify(result, null, 2)}</pre>
           </div>`;
       }
 
@@ -70,7 +76,7 @@ export default function main() {
     } else {
       // Si la llamada falla, muestra un mensaje de error visible
       sigmaContainer.innerHTML =
-        '<p style="color:#b91c1c; padding:12px; border:1px solid #fecaca; background:#fef2f2; text-align:center;"><strong>Error:</strong> No se pudo cargar la información del backend.</p>';
+        '<p style="color:#b91c1c; padding:12px; border:1px solid #110909ff; background:#fef2f2; text-align:center;"><strong>Error:</strong> No se pudo cargar la información del backend.</p>';
     }
   }
 
@@ -146,7 +152,7 @@ export default function main() {
   );
 
   // Define la pestaña inicial al cargar (puedes cambiar a "mapa" si lo prefieres)
-  const initialTab = "resumen";
+  const initialTab = "mapa";
 
   // Activa la pestaña inicial
   activateTab(initialTab);
@@ -154,7 +160,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función: Cargar Sigma y enlazar controles (Zoom/Reset + Umbral de etiquetas)
   // ----------------------------------------------------------------------------------
-  async function loadSigma() {
+  async function loadSigmaPre() {
     try {
       // Solicita el archivo GEXF al servidor
       const res = await fetch("/data/arctic.gexf");
@@ -166,11 +172,19 @@ export default function main() {
       // Parsea el texto GEXF y crea el grafo en memoria
       const graph = parse(Graph, gexf);
 
+      // Paleta de colores para los nodos
+      const palette = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#f43f5e", "#22c55e"];
+
       // Asegura que todos los nodos tengan coordenadas numéricas (fallback aleatorio)
       graph.forEachNode((node, attr) => {
         attr.x = Number(attr.x ?? Math.random());
         attr.y = Number(attr.y ?? Math.random());
+        const color = palette[Math.floor(Math.random() * palette.length)];
+        graph.setNodeAttribute(node, "color", color);
+        graph.setNodeAttribute(node, "size", 25);
       });
+
+
 
       // Crea la instancia de Sigma en el contenedor
       renderer = new Sigma(graph, sigmaContainer, {
@@ -223,45 +237,141 @@ export default function main() {
   }
 
   // ----------------------------------------------------------------------------------
-  // Devuelve una función de limpieza para cuando se desmonte el módulo (opcional)
+  // Función: Cargar sigma con MAPA
   // ----------------------------------------------------------------------------------
-  return () => {
-    // Ejecuta la limpieza si fue definida
-    cleanup?.();
-    // Retira los listeners de pestañas para evitar fugas de memoria
-    triggers.forEach((btn) =>
-      btn.removeEventListener("click", () => activateTab(btn.dataset.tab))
-    );
-  };
-}
-
-// ----------------------------------------------------------------------------------
-// Función auxiliar: Llamar al API del backend y devolver el JSON
-// ----------------------------------------------------------------------------------
-async function callAPIBackend() {
-  // Define la URL del endpoint del backend
-  const apiUrl = "https://childcaremap-capabackend.up.railway.app/api/saludo";
-
+  async function loadSigma() {
   try {
-    // Realiza la petición HTTP al endpoint
-    const response = await fetch(apiUrl);
-
-    // Verifica que la respuesta sea correcta (código 2xx)
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Elimina el mapa previo si existe (evita duplicados)
+    if (window._mapInstance) {
+      window._mapInstance.remove();
+      window._mapInstance = null;
     }
 
-    // Parsea el cuerpo de la respuesta como JSON
-    const data = await response.json();
+    // Crea o limpia el contenedor del mapa
+    let mapDiv = document.getElementById("map-container");
+    if (!mapDiv) {
+      mapDiv = document.createElement("div");
+      mapDiv.id = "map-container";
+      mapDiv.style.width = "100%";
+      mapDiv.style.height = "900px"; // Altura fija para mantener la visibilidad
+      mapDiv.style.border = "2px solid #ccc";
+      mapDiv.style.borderRadius = "12px";
+      mapDiv.style.overflow = "hidden";
+      mapDiv.style.position = "relative";
+      mapDiv.style.zIndex = "1";
 
-    // Registra en consola para depuración exitosa
-    console.log("OK callAPIBackend - Datos recibidos:", data);
+      // Inserta el contenedor dentro del elemento padre principal
+      const parent = document.getElementById("sigma-container");
+      if (!parent) throw new Error("No se encontró el elemento #sigma-container");
+      parent.innerHTML = "";
+      parent.appendChild(mapDiv);
+    }
 
-    // Devuelve el resultado al llamador
-    return data;
+    // Crea el mapa centrado en Perú
+    const map = L.map(mapDiv, {
+      zoomControl: true, // Habilita el control de zoom
+      worldCopyJump: false,
+      minZoom: 5,
+      maxZoom: 12,
+    }).setView([-9.19, -75.0152], 6);
+
+    // Carga la capa base de OpenStreetMap
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+      maxZoom: 20,
+    }).addTo(map);
+
+    // Fuerza el recálculo del tamaño del mapa (corrige el mosaico inicial)
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+
+    // Agrega el marcador principal (Lima)
+    L.circleMarker([-12.0464, -77.0428], {
+      radius: 10,
+      color: "#e63946",
+      fillColor: "#e63946",
+      fillOpacity: 0.9,
+    })
+      .addTo(map)
+      .bindPopup("<b>Lima</b><br>Capital del Perú")
+      .openPopup();
+
+    // Agrega marcadores fijos para otras ciudades importantes
+    const cities = [
+      { name: "Arequipa", coords: [-16.4090, -71.5375], color: "#3b82f6" },
+      { name: "Cusco", coords: [-13.5319, -71.9675], color: "#10b981" },
+      { name: "Trujillo", coords: [-8.1117, -79.0288], color: "#f59e0b" },
+      { name: "Piura", coords: [-5.1945, -80.6328], color: "#8b5cf6" },
+      { name: "Iquitos", coords: [-3.7491, -73.2538], color: "#06b6d4" },
+      { name: "Puno", coords: [-15.8402, -70.0219], color: "#f43f5e" },
+      { name: "Chiclayo", coords: [-6.7736, -79.8417], color: "#22c55e" },
+      { name: "Tacna", coords: [-18.0066, -70.2463], color: "#9333ea" },
+      { name: "Huancayo", coords: [-12.0686, -75.2103], color: "#14b8a6" },
+    ];
+
+    // Dibuja los marcadores de cada ciudad en el mapa
+    cities.forEach((city) => {
+      L.circleMarker(city.coords, {
+        radius: 8,
+        color: city.color,
+        fillColor: city.color,
+        fillOpacity: 0.85,
+      })
+        .addTo(map)
+        .bindPopup(`<b>${city.name}</b>`);
+    });
+
+    // (Opcional) Agrega nodos aleatorios dentro del territorio peruano
+    // Puedes añadir aquí nodos generados aleatoriamente si lo deseas.
+
+    // Guarda la referencia global del mapa
+    window._mapInstance = map;
+
+    // Define la rutina de limpieza (opcional si se usa Sigma)
+    cleanup = () => {
+      if (window._mapInstance) {
+        window._mapInstance.remove();
+        window._mapInstance = null;
+      }
+      renderer?.kill?.();
+      renderer = null;
+    };
   } catch (err) {
-    // Informa cualquier error de red o de parseo
-    console.error("Error callAPIBackend:", err.message);
+    // Maneja errores en la carga o renderizado del mapa
+    console.error("[mainPro] Error al cargar/renderizar el mapa:", err);
   }
 }
 
+  // ----------------------------------------------------------------------------------
+  // Función auxiliar: Llamar al API del backend y devolver el JSON
+  // ----------------------------------------------------------------------------------
+  async function callAPIBackend() {
+    // Define la URL del endpoint del backend
+    const apiUrlPRE = "https://childcaremap-capabackend.up.railway.app/api/saludo";
+    const apiUrl = "https://childcaremap-capabackend.up.railway.app/print/tupla?i=1";
+
+    try {
+      // Realiza la petición HTTP al endpoint
+      const response = await fetch(apiUrl);
+
+      // Verifica que la respuesta sea correcta (código 2xx)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Parsea el cuerpo de la respuesta como JSON
+      const data = await response.json();
+
+      // Registra en consola para depuración exitosa
+      console.log("OK callAPIBackend - Datos recibidos:", data);
+
+      // Devuelve el resultado al llamador
+      return data;
+    } catch (err) {
+      // Informa cualquier error de red o de parseo
+      console.error("Error callAPIBackend:", err.message);
+    }
+  }
+
+}

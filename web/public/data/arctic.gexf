@@ -9,16 +9,16 @@
   </meta>
   <graph mode="static" defaultedgetype="undirected">
     <nodes>
-      <node id="n0" label="Node 0" x="0" y="0" size="5" />
-      <node id="n1" label="Node 1" x="1" y="2" size="4" />
-      <node id="n2" label="Node 2" x="2" y="1" size="6" />
-      <node id="n3" label="Node 3" x="3" y="3" size="3" />
-      <node id="n4" label="Node 4" x="4" y="0" size="5" />
-      <node id="n5" label="Node 5" x="5" y="2" size="4" />
-      <node id="n6" label="Node 6" x="6" y="1" size="6" />
-      <node id="n7" label="Node 7" x="7" y="3" size="3" />
-      <node id="n8" label="Node 8" x="8" y="0" size="5" />
-      <node id="n9" label="Node 9" x="9" y="2" size="4" />
+      <node id="n0" label="Paciente 0" x="0" y="0" size="5" />
+      <node id="n1" label="Paciente 1" x="1" y="2" size="4" />
+      <node id="n2" label="Paciente 2" x="2" y="1" size="6" />
+      <node id="n3" label="Paciente 3" x="3" y="3" size="3" />
+      <node id="n4" label="Paciente 4" x="4" y="0" size="5" />
+      <node id="n5" label="Paciente 5" x="5" y="2" size="4" />
+      <node id="n6" label="Paciente 6" x="6" y="1" size="6" />
+      <node id="n7" label="Paciente 7" x="7" y="3" size="3" />
+      <node id="n8" label="Paciente 8" x="8" y="0" size="5" />
+      <node id="n9" label="Paciente 9" x="9" y="2" size="4" />
     </nodes>
     <edges>
       <edge id="e0" source="n0" target="n1" />

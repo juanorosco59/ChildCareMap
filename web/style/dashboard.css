@@ -43,8 +43,8 @@ body{
   height: 100vh;
   z-index: 1;                      /* below UI elements */
   background:rgb(22, 51, 22);
-}
 
+}
 /* Sidebar panel: left column, scrolls internally */
 .dashboard-panel{
   position: fixed;
@@ -182,8 +182,9 @@ body{
 }
 .map-controls input[type="range"],
 .graph-controls input[type="range"],
+
 #map-controls input[type="range"]{
-  width: 140px; height: 6px; border-radius: 4px; background: #e5e7eb; outline:none; -webkit-appearance:none;
+  width: 140px; height: 6px; border-radius: 4px; background: #e5e7eb; outline:none;
   accent-color: var(--brand); cursor:pointer;
 }
 
