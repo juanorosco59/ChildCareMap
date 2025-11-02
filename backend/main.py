@@ -22,7 +22,7 @@ def saludo():
     return {"mensaje": "Hola desde FastAPI (ChildCareMap API5)"}
 
 # Define una ruta GET
-@app.get("/basic/print")
+@app.get("/print/tupla")
 def printTupla():
     # Crear una tupla
     my_tuple = (1, 2, 3, 4)
