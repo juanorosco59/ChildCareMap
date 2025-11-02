@@ -35,7 +35,7 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <div class="alert-content">
-          <strong>Alerta de Riesgo Crítico</strong><br>
+          <strong>Alerta de riesgo crítico</strong><br>
           Hay 5 comunidades con nivel de riesgo crítico que requieren intervención inmediata.
         </div>
       </div>
@@ -109,12 +109,13 @@
   </div>
  
   <div id="sigma-container"></div>
+
   <div class="map-controls">
     <button id="zoom-in">Zoom +</button>
     <button id="zoom-out">Zoom -</button>
     <button id="zoom-reset">Reset Zoom</button>
     <label>
-      Labels threshold:
+      Umbral de etiquetas::
       <input type="range" id="labels-threshold" min="0" max="10" step="1" />
     </label>
   </div>
@@ -124,6 +125,9 @@
 <script type="module">
   import main from "./js/mainPro.js";
   main();
+
+
+
 </script>
 </body>
 </html>

@@ -42,7 +42,7 @@ body{
   width: calc(100vw - var(--sidebar-width));
   height: 100vh;
   z-index: 1;                      /* below UI elements */
-  background: #fff;
+  background:rgb(22, 51, 22);
 }
 
 /* Sidebar panel: left column, scrolls internally */
@@ -327,3 +327,4 @@ body{
     transform: translateX(-50%) !important;
   }
 }
+
