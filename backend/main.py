@@ -22,7 +22,8 @@ def saludo():
 
 # Define una ruta GET
 @app.get("/print/tupla")
-def printTupla():
+
+def printTupla(i: int):
     # Crear una tupla
     my_tuple = (1, 2, 3, 4)
     my_list = list(my_tuple)
@@ -36,5 +37,6 @@ def printTupla():
     # Retornamos la lista como JSON
     return {
         "mensaje": "Lista generada",
-        "valores": printed_items
+        "valores": printed_items,
+        "nodo": printed_items[i]
     }
