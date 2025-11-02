@@ -178,7 +178,7 @@ body{
 
 .map-controls label, .graph-controls label, #map-controls label{
   display:flex; align-items:center; gap:6px;
-  font-size:13px; font-weight:600; color: var(--text);
+  font-size:13px; font-weight:600; color: black;
 }
 .map-controls input[type="range"],
 .graph-controls input[type="range"],
