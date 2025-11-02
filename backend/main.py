@@ -15,4 +15,4 @@ app.add_middleware(
 
 @app.get("/api/saludo")
 def saludo():
-    return {"mensaje": "Hola desde FastAPI (ChildCareMap API4)"}
+    return {"mensaje": "Hola desde FastAPI (ChildCareMap API5)"}
