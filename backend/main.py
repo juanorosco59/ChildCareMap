@@ -15,25 +15,19 @@ app.add_middleware(
     allow_headers=["*"],         # Permite todos los encabezados
 )
 
-# Define una ruta GET simple en /api/saludo
+# Define una ruta GET
 @app.get("/api/saludo")
 def saludo():
     # Devuelve un JSON de ejemplo
     return {"mensaje": "Hola desde FastAPI (ChildCareMap API5)"}
 
-# Define una ruta GET simple en /api/saludo
+# Define una ruta GET
 @app.get("/basic/print")
-def basic_print():
-    # Creamos una tupla
+def printTupla():
+    # Crear una tupla
     my_tuple = (1, 2, 3, 4)
-
-    # Convertimos la tupla en lista
     my_list = list(my_tuple)
-
-    # Agregamos un nuevo número
     my_list.append(5)
-
-    # Creamos una lista de strings para devolver
     printed_items = []
 
     # Recorremos y guardamos los valores en la lista
@@ -42,6 +36,6 @@ def basic_print():
 
     # Retornamos la lista como JSON
     return {
-        "mensaje": "Lista generada correctamente",
+        "mensaje": "Lista generada",
         "valores": printed_items
     }
