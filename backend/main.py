@@ -1,10 +1,9 @@
 # Importa la clase principal de FastAPI
 from fastapi import FastAPI
-# Importa el middleware para manejar CORS (Cross-Origin Resource Sharing)
 from fastapi.middleware.cors import CORSMiddleware
 
 # Crea una instancia de la aplicación
-app = FastAPI(title="ChildCareMap API")
+app = FastAPI(title="ChildCareMap Backend")
 
 # Configura el middleware de CORS
 app.add_middleware(
