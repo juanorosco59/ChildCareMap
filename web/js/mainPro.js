@@ -160,7 +160,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función: Cargar Sigma y enlazar controles (Zoom/Reset + Umbral de etiquetas)
   // ----------------------------------------------------------------------------------
-  async function loadSigma() {
+  async function loadSigmaPre() {
     try {
       // Solicita el archivo GEXF al servidor
       const res = await fetch("/data/arctic.gexf");
@@ -239,7 +239,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función: Cargar sigma con MAPA
   // ----------------------------------------------------------------------------------
-  async function loadSigmaPre() {
+  async function loadSigma() {
   try {
     // Elimina el mapa previo si existe (evita duplicados)
     if (window._mapInstance) {
