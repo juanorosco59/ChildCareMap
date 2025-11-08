@@ -8,16 +8,20 @@
 
 ## Algoritmos utilizados
 
-- **Union-Find (UFDS):**  
+- **Union-Find (UFDS):**
+  
     Permite identificar y agrupar elementos que comparten una relación común.  
-        Se utiliza para **agrupar a los niños por zonas de influencia**, detectando comunidades o clústeres con mayor incidencia de **anemia o desnutrición**.
+    
+    Se utiliza para **agrupar a los niños por zonas de influencia**, detectando comunidades o clústeres con mayor incidencia de **anemia o desnutrición**.
 
-- **Árboles de Expansión Mínima (MST):**  
+- **Árboles de Expansión Mínima (MST):**
+
     Conectan un conjunto de nodos con el **menor costo total posible**, considerando una métrica de distancia o peso.  
-        Se emplean para **diseñar una red óptima de distribución de recursos**, priorizando las zonas con **mayor vulnerabilidad nutricional**.
+    
+    Se emplean para **diseñar una red óptima de distribución de recursos**, priorizando las zonas con **mayor vulnerabilidad nutricional**.
 
 ---
 
 ## Estado del proyecto
 
-    En desarrollo — versión **0.1.0 (beta)**
+    En desarrollo — versión 0.0.1
