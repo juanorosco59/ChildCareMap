@@ -1,4 +1,4 @@
-# 🌟 ChildCareMap
+# ChildCareMap - Grupo 3
 
 ### _Mapeo de la inseguridad nutricional infantil en comunidades vulnerables del Perú_
 
