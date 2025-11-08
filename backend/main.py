@@ -18,7 +18,7 @@ app.add_middleware(
 @app.get("/api/saludo")
 def saludo():
     # Devuelve un JSON de ejemplo
-    return {"mensaje": "Hola desde FastAPI (ChildCareMap API5)"}
+    return {"mensaje": "Respuesta del backend por ChildCareMap API 5"}
 
 # Define una ruta GET
 @app.get("/print/tupla")
