@@ -1,7 +1,7 @@
 # Importa la clase principal de FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-#import pymysql
+import pymysql
 
 # Crea una instancia de la aplicación
 app = FastAPI(title="ChildCareMap Backend")
@@ -42,3 +42,23 @@ def printTupla(i: int):
         "nodo": printed_items[i]
     }
 
+
+def get_connection():
+    return pymysql.connect(
+        host="switchback.proxy.rlwy.net",
+        port=40976,
+        user="root",
+        password="xJuZmDpKojQgwzkWqMrdaHiFhIhVIfep",
+        database="railway",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+
+# Función opcional para color según anemia
+def anemia_to_color(value: float):
+    if value < 10:
+        return "#ef4444"  # Rojo — crítico
+    elif value < 12:
+        return "#f59e0b"  # Naranja — moderado
+    else:
+        return "#22c55e"  # Verde — normal
