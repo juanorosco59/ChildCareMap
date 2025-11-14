@@ -178,7 +178,7 @@
       Si no existe "visited", significa que el usuario nunca inició sesión.
       Entonces cargamos primero el login.
     */
-    if (notVisited) {
+    if (!notVisited) {
         showLogin();
     } else {
         showDashboard();
