@@ -16,7 +16,6 @@ export default function main() {
   const triggers = [...document.querySelectorAll(".tab-trigger")];
   // Obtiene todos los paneles de contenido asociados a las pestañas
   const contents = [...document.querySelectorAll(".tab-content")];
-
   // Referencia al contenedor donde se mostrará el mapa (y/o contenido de otras pestañas)
   const sigmaContainer = document.getElementById("sigma-container");
 
@@ -253,7 +252,8 @@ export default function main() {
       mapDiv = document.createElement("div");
       mapDiv.id = "map-container";
       mapDiv.style.width = "100%";
-      mapDiv.style.height = "900px"; // Altura fija para mantener la visibilidad
+    // Altura fija para mantener la visibilidad
+      mapDiv.style.height = "900px"; 
       mapDiv.style.border = "2px solid #ccc";
       mapDiv.style.borderRadius = "12px";
       mapDiv.style.overflow = "hidden";
@@ -269,7 +269,8 @@ export default function main() {
 
     // Crea el mapa centrado en Perú
     const map = L.map(mapDiv, {
-      zoomControl: true, // Habilita el control de zoom
+    // Habilita el control de zoom
+      zoomControl: true, 
       worldCopyJump: false,
       minZoom: 5,
       maxZoom: 12,
@@ -322,8 +323,6 @@ export default function main() {
         .bindPopup(`<b>${city.name}</b>`);
     });
 
-    // (Opcional) Agrega nodos aleatorios dentro del territorio peruano
-    // Puedes añadir aquí nodos generados aleatoriamente si lo deseas.
 
     // Guarda la referencia global del mapa
     window._mapInstance = map;
@@ -346,7 +345,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función auxiliar: Llamar al API del backend y devolver el JSON
   // ----------------------------------------------------------------------------------
-  async function callAPIBackend() {
+  async function callAPIBackendPre() {
     // Define la URL del endpoint del backend
     const apiUrlPRE = "https://childcaremap-capabackend.up.railway.app/api/saludo";
     const apiUrl = "https://childcaremap-capabackend.up.railway.app/print/tupla?i=1";
@@ -374,4 +373,40 @@ export default function main() {
     }
   }
 
+}
+
+// ==================================================================================
+// Función auxiliar: consulta el backend (FastAPI) y devuelve el JSON recibido
+// ==================================================================================
+async function callAPIBackend(endpoint = "/api/patients") {
+
+  // URL base del backend (Railway o localhost)
+  const BASE_URL = "https://childcaremap-capabackend.up.railway.app";
+
+  // Construye la URL final
+  const url = `${BASE_URL}${endpoint}`;
+
+  try {
+    console.log("📡 Llamando al backend:", url);
+
+    // Petición HTTP al backend
+    const response = await fetch(url);
+
+    // Verifica si la respuesta es válida
+    if (!response.ok) {
+      throw new Error(`Respuesta HTTP no válida (status: ${response.status})`);
+    }
+
+    // Convierte la respuesta en JSON
+    const data = await response.json();
+
+    console.log("Datos recibidos del backend:", data);
+
+    // Devuelve los datos para que otra función los use
+    return data;
+
+  } catch (error) {
+    console.error("Error en callAPIBackend:", error.message);
+    return null; // Devuelve null para evitar romper el flujo
+  }
 }
