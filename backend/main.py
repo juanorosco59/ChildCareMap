@@ -62,3 +62,34 @@ def anemia_to_color(value: float):
         return "#f59e0b"  # Naranja — moderado
     else:
         return "#22c55e"  # Verde — normal
+
+
+@app.get("/api/patients")
+def get_patients():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT id, name, last_name, age, latitude, longitude, anemia_value, created_at
+        FROM patients
+    """
+
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    data = []
+    for r in rows:
+        data.append({
+            "id": r.id,
+            "name": f"{r.name} {r.last_name}",
+            "age": r.age,
+            "coords": [float(r.latitude), float(r.longitude)],
+            "anemia_value": float(r.anemia_value),
+            "color": anemia_to_color(float(r.anemia_value)),
+            "created_at": str(r.created_at)
+        })
+
+    cursor.close()
+    conn.close()
+
+    return data
