@@ -85,18 +85,18 @@
   </div>
 
   <script>
-    // // Referencia al formulario
+    // Referencia al formulario
     const loginForm = document.getElementById('login-form');
     
-    // // Evento de envío del formulario
+    // Evento de envío del formulario
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault(); // Evita que el formulario recargue la página
       
-      // // Obtención de los valores del formulario
+    // Obtención de los valores del formulario
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       
-      // // Aquí se deberían enviar las credenciales al backend para validación
+    // Aquí se deberían enviar las credenciales al backend para validación
       console.log('Intento de inicio de sesión:', { email, password });
       
       setTimeout(() => {

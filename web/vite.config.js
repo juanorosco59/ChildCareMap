@@ -12,10 +12,21 @@ import { defineConfig } from 'vite';
 //
 //
 
-export default defineConfig({
-  preview: {
-    allowedHosts: ['childcaremap-capafrontend.up.railway.app'],
-    host: '0.0.0.0',
-    port: process.env.PORT || 4173
+//export default defineConfig({
+//  preview: {
+//    allowedHosts: ['childcaremap-capafrontend.up.railway.app'],
+//    host: '0.0.0.0',
+//    port: process.env.PORT || 4173
+//  }
+//})
+
+export default {
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        login: 'login.html',
+      }
+    }
   }
-})
+}

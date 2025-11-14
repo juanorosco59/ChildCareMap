@@ -1,9 +1,11 @@
+/* Reset básico: elimina márgenes, relleno y garantiza un modelo de caja consistente */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Estilo general del body: centra el contenido y aplica fondo suave */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   min-height: 100vh;
@@ -14,21 +16,22 @@ body {
   padding: 20px;
 }
 
-/* Login Container */
+/* Contenedor principal del login */
 .login-container {
-  width: 100%;
-  max-width: 450px;
+  width: 150%;
+  max-width: 950px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Logo and Title */
+/* Cabecera del login: logo, título y subtítulo */
 .login-header {
   text-align: center;
   margin-bottom: 32px;
 }
 
+/* Icono del logo dentro del login */
 .logo-icon {
   width: 64px;
   height: 64px;
@@ -55,22 +58,23 @@ body {
   font-weight: 400;
 }
 
-/* Login Card */
+/* Tarjeta del formulario de login (caja blanca) */
 .login-card {
   width: 100%;
-  background: white;
+  background: rgb(255, 255, 255);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 48px 40px;
 }
 
-/* Form */
+/* Formulario estructurado en columnas con separación entre campos */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
+/* Grupo de cada input: etiqueta + campo */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -83,12 +87,14 @@ body {
   color: #1a1a1a;
 }
 
+/* Contenedor del input junto con su ícono */
 .input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
+/* Ícono de los inputs: fijado a la izquierda */
 .input-icon {
   position: absolute;
   left: 14px;
@@ -96,9 +102,10 @@ body {
   pointer-events: none;
 }
 
+/* Estilo base de los inputs */
 .input-wrapper input {
   width: 100%;
-  padding: 12px 14px 12px 44px;
+  padding: 12px 14px 12px 44px; /* Espacio para el ícono */
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 14px;
@@ -108,6 +115,7 @@ body {
   outline: none;
 }
 
+/* Estilo del input cuando está enfocado */
 .input-wrapper input:focus {
   border-color: #0d9488;
   background: white;
@@ -118,12 +126,12 @@ body {
   color: #9ca3af;
 }
 
-/* Login Button */
+/* Botón principal de inicio de sesión */
 .login-button {
   width: 100%;
   padding: 14px 24px;
   background: #0d9488;
-  color: white;
+  color: rgb(255, 255, 255);
   border: none;
   border-radius: 6px;
   font-size: 15px;
@@ -133,16 +141,18 @@ body {
   margin-top: 4px;
 }
 
+/* Hover del botón */
 .login-button:hover {
   background: #0f766e;
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
+/* Efecto al presionar el botón */
 .login-button:active {
   transform: translateY(1px);
 }
 
-/* Footer */
+/* Pie del formulario */
 .login-footer {
   margin-top: 32px;
   text-align: center;
@@ -154,7 +164,7 @@ body {
   font-weight: 400;
 }
 
-/* Responsive */
+/* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 480px) {
   .login-card {
     padding: 36px 28px;
