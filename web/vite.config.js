@@ -14,7 +14,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   preview: {
-    allowedHosts: ['childcaremap-capafrontend.up.railway.app'],
+    allowedHosts: ['childcaremap-capafrontendqa.up.railway.app'],
     host: '0.0.0.0',
     port: process.env.PORT || 4173
   }
