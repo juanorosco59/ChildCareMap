@@ -64,7 +64,7 @@ def anemia_to_color(value: float):
         return "#22c55e"  # Verde — normal
 
 
-@app.get("/api/patients")
+@app.get("/api/pacientes")
 def get_patients():
     conn = get_connection()
     cursor = conn.cursor()
