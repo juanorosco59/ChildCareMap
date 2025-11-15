@@ -378,7 +378,7 @@ export default function main() {
 // ==================================================================================
 // Función auxiliar: consulta el backend (FastAPI) y devuelve el JSON recibido
 // ==================================================================================
-async function callAPIBackend(endpoint = "/api/patients") {
+async function callAPIBackend(endpoint = "/api/pacientes") {
 
   // URL base del backend (Railway o localhost)
   const BASE_URL = "https://childcaremap-capabackend.up.railway.app";
