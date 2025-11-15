@@ -101,29 +101,49 @@
             <h3>Mapa de comunidades vulnerables</h3>
             <p>Distribución geográfica de niños con anemia en el Perú</p>
 
-            <!-- ============================BLOQUE UFD=============================== -->
-            <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px;">
-              <label for="input-km-ufd" style="min-width: 160px;">Radio de búsqueda (km):</label>
+            <!-- CAMPO DE ENTRADA Y BOTÓN (UFD) -->
+            <div style="
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+">
+              <label for="input-km" style="min-width: 180px; font-weight: 500;">
+                Radio de búsqueda (km):
+              </label>
 
-              <input type="number" id="input-km-ufd" min="1" max="100" value="10" style="padding: 5px; width: 90px;">
+              <input type="number" id="input-km" name="radio_km" min="1" max="100" value="10"
+                style="padding: 6px; width: 90px;">
 
-              <button id="btn-ejecutar-ufd"
-                style="padding: 6px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              <button id="btn-ejecutar-ufd" style="padding: 6px 14px; background-color: #007bff; color: white;
+           border: none; border-radius: 5px; cursor: pointer;">
                 Ejecutar UFD
               </button>
             </div>
+            <!-- FIN CAMPO DE ENTRADA Y BOTÓN -->
 
-            <!-- ============================BLOQUE MST=============================== -->
-            <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px;">
-              <label for="input-km-mst" style="min-width: 160px;">Criterio MST:</label>
+            <!-- CAMPO DE ENTRADA Y BOTÓN (MST) -->
+            <div style="
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+">
+              <label for="input-km" style="min-width: 180px; font-weight: 500;">
+                Criterio MST:
+              </label>
 
-              <input type="number" id="input-km-mst" min="1" max="5" value="1" style="padding: 5px; width: 90px;">
+              <input type="number" id="input-km" name="radio_km" min="1" max="5" value="1"
+                style="padding: 6px; width: 90px;">
 
-              <button id="btn-ejecutar-mst"
-                style="padding: 6px 16px; background-color: #22a800; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              <button id="btn-ejecutar-ufd" style="padding: 6px 14px; background-color: #007bff; color: white;
+           border: none; border-radius: 5px; cursor: pointer;">
                 Ejecutar MST
               </button>
             </div>
+            <!-- FIN CAMPO DE ENTRADA Y BOTÓN -->
 
 
 
