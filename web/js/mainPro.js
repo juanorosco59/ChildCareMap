@@ -30,6 +30,8 @@ export default function main() {
   // Guarda una función de limpieza opcional para destruir recursos cuando sea necesario
   let cleanup = null;
 
+  let modoCluster = false;
+
   // ----------------------------------------------------------------------------------
   // Función: Mostrar datos provenientes del backend dentro de #sigma-container
   // ----------------------------------------------------------------------------------
@@ -93,7 +95,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función: Activar pestaña (Resumen / Mapa / Datos) y controlar contenido
   // ----------------------------------------------------------------------------------
-  async function activateTab(name) {
+  async function activateTab(name, buttonName) {
     // Marca visualmente el botón activo y desactiva el resto
     triggers.forEach((btn) =>
       btn.classList.toggle("active", btn.getAttribute("data-tab") === name)
@@ -116,11 +118,25 @@ export default function main() {
       if (mapControls) mapControls.style.display = "flex";
 
       // Carga Sigma solo la primera vez; si ya existe, refresca el render
+      //if (!renderer) {
+      //  await loadSigma();
+      //} else {
+      //  renderer.refresh?.();
+      //}
+
       if (!renderer) {
-        await loadSigma();
+        if (modoCluster) {
+          const kmInput = document.getElementById("input-km");
+          const km = Number(kmInput?.value || 10);
+          await loadCluster(km);
+        } else {
+          await loadSigma();
+        }
       } else {
         renderer.refresh?.();
       }
+
+
     }
     // Si la pestaña seleccionada es "datos", se reemplaza el contenido por datos del backend
     else if (name === "datos") {
@@ -131,7 +147,9 @@ export default function main() {
       // Asegura que el contenedor sea visible para mostrar los datos
       sigmaContainer.style.display = "block";
       // Invoca la función que obtiene e inserta los datos del backend
-      displayBackendData();
+      //displayBackendData();
+      displayTableFromBackend();
+
     }
     // Si la pestaña es "resumen" u otra, se oculta y limpia el contenedor
     else {
@@ -152,6 +170,7 @@ export default function main() {
 
   // Define la pestaña inicial al cargar (puedes cambiar a "mapa" si lo prefieres)
   const initialTab = "mapa";
+
 
   // Activa la pestaña inicial
   activateTab(initialTab);
@@ -239,108 +258,135 @@ export default function main() {
   // Función: Cargar sigma con MAPA
   // ----------------------------------------------------------------------------------
   async function loadSigma() {
-  try {
-    // Elimina el mapa previo si existe (evita duplicados)
-    if (window._mapInstance) {
-      window._mapInstance.remove();
-      window._mapInstance = null;
-    }
-
-    // Crea o limpia el contenedor del mapa
-    let mapDiv = document.getElementById("map-container");
-    if (!mapDiv) {
-      mapDiv = document.createElement("div");
-      mapDiv.id = "map-container";
-      mapDiv.style.width = "100%";
-    // Altura fija para mantener la visibilidad
-      mapDiv.style.height = "900px"; 
-      mapDiv.style.border = "2px solid #ccc";
-      mapDiv.style.borderRadius = "12px";
-      mapDiv.style.overflow = "hidden";
-      mapDiv.style.position = "relative";
-      mapDiv.style.zIndex = "1";
-
-      // Inserta el contenedor dentro del elemento padre principal
-      const parent = document.getElementById("sigma-container");
-      if (!parent) throw new Error("No se encontró el elemento #sigma-container");
-      parent.innerHTML = "";
-      parent.appendChild(mapDiv);
-    }
-
-    // Crea el mapa centrado en Perú
-    const map = L.map(mapDiv, {
-    // Habilita el control de zoom
-      zoomControl: true, 
-      worldCopyJump: false,
-      minZoom: 5,
-      maxZoom: 12,
-    }).setView([-9.19, -75.0152], 6);
-
-    // Carga la capa base de OpenStreetMap
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-      maxZoom: 20,
-    }).addTo(map);
-
-    // Fuerza el recálculo del tamaño del mapa (corrige el mosaico inicial)
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 300);
-
-    // Agrega el marcador principal (Lima)
-    L.circleMarker([-12.0464, -77.0428], {
-      radius: 10,
-      color: "#e63946",
-      fillColor: "#e63946",
-      fillOpacity: 0.9,
-    })
-      .addTo(map)
-      .bindPopup("<b>Lima</b><br>Capital del Perú")
-      .openPopup();
-
-    // Agrega marcadores fijos para otras ciudades importantes
-    const cities = [
-      { name: "Arequipa", coords: [-16.4090, -71.5375], color: "#3b82f6" },
-      { name: "Cusco", coords: [-13.5319, -71.9675], color: "#10b981" },
-      { name: "Trujillo", coords: [-8.1117, -79.0288], color: "#f59e0b" },
-      { name: "Piura", coords: [-5.1945, -80.6328], color: "#8b5cf6" },
-      { name: "Iquitos", coords: [-3.7491, -73.2538], color: "#06b6d4" },
-      { name: "Puno", coords: [-15.8402, -70.0219], color: "#f43f5e" },
-      { name: "Chiclayo", coords: [-6.7736, -79.8417], color: "#22c55e" },
-      { name: "Tacna", coords: [-18.0066, -70.2463], color: "#9333ea" },
-      { name: "Huancayo", coords: [-12.0686, -75.2103], color: "#14b8a6" },
-    ];
-
-    // Dibuja los marcadores de cada ciudad en el mapa
-    cities.forEach((city) => {
-      L.circleMarker(city.coords, {
-        radius: 8,
-        color: city.color,
-        fillColor: city.color,
-        fillOpacity: 0.85,
-      })
-        .addTo(map)
-        .bindPopup(`<b>${city.name}</b>`);
-    });
-
-
-    // Guarda la referencia global del mapa
-    window._mapInstance = map;
-
-    // Define la rutina de limpieza (opcional si se usa Sigma)
-    cleanup = () => {
+    try {
+      // Elimina el mapa previo si existe (evita duplicados)
       if (window._mapInstance) {
         window._mapInstance.remove();
         window._mapInstance = null;
       }
-      renderer?.kill?.();
-      renderer = null;
-    };
-  } catch (err) {
-    // Maneja errores en la carga o renderizado del mapa
-    console.error("[mainPro] Error al cargar/renderizar el mapa:", err);
+
+      // Crea o limpia el contenedor del mapa
+      let mapDiv = document.getElementById("map-container");
+      if (!mapDiv) {
+        mapDiv = document.createElement("div");
+        mapDiv.id = "map-container";
+        mapDiv.style.width = "100%";
+        // Altura fija para mantener la visibilidad
+        mapDiv.style.height = "800px";
+        mapDiv.style.border = "2px solid #ccc";
+        mapDiv.style.borderRadius = "12px";
+        mapDiv.style.overflow = "hidden";
+        mapDiv.style.position = "relative";
+        mapDiv.style.zIndex = "1";
+
+        // Inserta el contenedor dentro del elemento padre principal
+        const parent = document.getElementById("sigma-container");
+        if (!parent) throw new Error("No se encontró el elemento #sigma-container");
+        parent.innerHTML = "";
+        parent.appendChild(mapDiv);
+      }
+
+      // Crea el mapa centrado en Perú
+      const map = L.map(mapDiv, {
+        // Habilita el control de zoom
+        zoomControl: true,
+        worldCopyJump: false,
+        minZoom: 5,
+        maxZoom: 12,
+      }).setView([-9.19, -75.0152], 6);
+
+      // Carga la capa base de OpenStreetMap
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+        maxZoom: 20,
+      }).addTo(map);
+
+      // Fuerza el recálculo del tamaño del mapa (corrige el mosaico inicial)
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 300);
+
+      // Agrega el marcador principal (Lima)
+      L.circleMarker([-12.0464, -77.0428], {
+        radius: 10,
+        color: "#e63946",
+        fillColor: "#e63946",
+        fillOpacity: 0.9,
+      })
+        .addTo(map)
+        .bindPopup("<b>Lima</b><br>Capital del Perú")
+        .openPopup();
+
+      // Agrega marcadores fijos para otras ciudades importantes
+      //const cities = [
+      //  { name: "Arequipa", coords: [-16.4090, -71.5375], color: "#3b82f6" },
+      //  { name: "Cusco", coords: [-13.5319, -71.9675], color: "#10b981" },
+      //  { name: "Trujillo", coords: [-8.1117, -79.0288], color: "#f59e0b" },
+      //  { name: "Piura", coords: [-5.1945, -80.6328], color: "#8b5cf6" },
+      //  { name: "Iquitos", coords: [-3.7491, -73.2538], color: "#06b6d4" },
+      //  { name: "Puno", coords: [-15.8402, -70.0219], color: "#f43f5e" },
+      //  { name: "Chiclayo", coords: [-6.7736, -79.8417], color: "#22c55e" },
+      //  { name: "Tacna", coords: [-18.0066, -70.2463], color: "#9333ea" },
+      //  { name: "Huancayo", coords: [-12.0686, -75.2103], color: "#14b8a6" },
+      //];
+
+      // Dibuja los marcadores de cada ciudad en el mapa
+      //cities.forEach((city) => {
+      //  L.circleMarker(city.coords, {
+      //    radius: 8,
+      //    color: city.color,
+      //    fillColor: city.color,
+      //    fillOpacity: 0.85,
+      //  })
+      //    .addTo(map)
+      //    .bindPopup(`<b>${city.name}</b>`);
+      //});
+
+      // --- Cargar pacientes desde el backend ---
+      const data = await callAPIBackend("/api/pacientes");
+
+      // Si hay datos válidos, dibujar cada paciente en el mapa
+      if (Array.isArray(data)) {
+        data.forEach((p) => {
+
+          // Color calculado automáticamente según anemia
+          const color = anemiaToColor(Number(p.anemia_value));
+
+          L.circleMarker(p.coords, {
+            radius: 8,
+            color: color,       // Color según nive de anemia
+            fillColor: color,
+            fillOpacity: 0.9,
+          })
+            .addTo(map)
+            .bindPopup(`
+        <b>${p.name}</b><br>
+        Edad: ${p.age}<br>
+        Anemia: ${p.anemia_value} g/dL<br>
+        Fecha: ${p.created_at}<br>
+      `);
+        });
+      } else {
+        console.error("Error: backend no devolvió array", data);
+      }
+
+      // Guarda la referencia global del mapa
+      window._mapInstance = map;
+
+      // Define la rutina de limpieza (opcional si se usa Sigma)
+      cleanup = () => {
+        if (window._mapInstance) {
+          window._mapInstance.remove();
+          window._mapInstance = null;
+        }
+        renderer?.kill?.();
+        renderer = null;
+      };
+    } catch (err) {
+      // Maneja errores en la carga o renderizado del mapa
+      console.error("[mainPro] Error al cargar/renderizar el mapa:", err);
+    }
   }
-}
 
   // ----------------------------------------------------------------------------------
   // Función auxiliar: Llamar al API del backend y devolver el JSON
@@ -372,6 +418,25 @@ export default function main() {
       console.error("Error callAPIBackend:", err.message);
     }
   }
+
+  // ======================================================================
+  // CAPTURAR BOTÓN "Ejecutar UFD" Y LEER INPUT-KM
+  // ======================================================================
+  const btnEjecutarUFD = document.getElementById("btn-ejecutar-ufd");
+
+  if (btnEjecutarUFD) {
+    btnEjecutarUFD.addEventListener("click", () => {
+      const kmInput = document.getElementById("input-km");
+      const km = Number(kmInput?.value || 10);
+
+      modoCluster = true;   // <- ACTIVAS MODO CLUSTER
+
+      console.log("🔵 Ejecutando UFD con radio:", km, "km");
+
+      loadCluster(km);
+    });
+  }
+
 
 }
 
@@ -410,3 +475,167 @@ async function callAPIBackend(endpoint = "/api/pacientes") {
     return null; // Devuelve null para evitar romper el flujo
   }
 }
+// ====================================================================
+// Mostrar datos del backend como TABLA en #sigma-container
+// ====================================================================
+async function displayTableFromBackend() {
+  const container = document.getElementById("sigma-container");
+
+  if (!container) {
+    console.error("No existe el contenedor #sigma-container");
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="padding:12px; text-align:center; color:#666;">
+      Cargando datos...
+    </div>
+  `;
+
+  const data = await callAPIBackend("/api/pacientes");
+
+  if (!data || !Array.isArray(data)) {
+    container.innerHTML = `
+      <p style="color:red;">Error: No se pudo obtener información del backend</p>
+    `;
+    return;
+  }
+
+  // Construye tabla
+  let html = `
+    <table style="width:100%; border-collapse:collapse; font-size:14px; color:#000;text-align:center;">
+      <thead>
+        <tr style="background:#eee;">
+          <th style="padding:8px; border:1px solid #ccc;">ID</th>
+          <th style="padding:8px; border:1px solid #ccc;">Paciente</th>
+          <th style="padding:8px; border:1px solid #ccc;">Edad</th>
+          <th style="padding:8px; border:1px solid #ccc;">Latitud</th>
+          <th style="padding:8px; border:1px solid #ccc;">Longitud</th>
+          <th style="padding:8px; border:1px solid #ccc;">Anemia</th>
+          <th style="padding:8px; border:1px solid #ccc;">Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.forEach((p) => {
+    html += `
+      <tr>
+        <td style="padding:6px; border:1px solid #ccc;">${p.id}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.name}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.age}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.coords[0]}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.coords[1]}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.anemia_value}</td>
+        <td style="padding:6px; border:1px solid #ccc;">${p.created_at}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+// ==================================================================================
+// Función: determinar color según nivel de anemia (al final del archivo)
+// ==================================================================================
+function anemiaToColor(value) {
+  if (value < 8) return "#ef4444";      // Rojo — Grave / riesgo vital
+  if (value < 10) return "#f97316";     // Naranja — Moderada
+  if (value < 12) return "#facc15";     // Amarillo — Leve
+  return "#22c55e";                     // Verde — Normal
+}
+
+// ------------------------------------------------------------------------
+// FUNCIÓN NUEVA: Cargar clusters desde /api/union_find_clusters
+// ------------------------------------------------------------------------
+async function loadCluster(km = 10) {
+  try {
+    // Leer radio desde el input #radioKm (si existe)
+    //let km = 10;
+    //const inputKm = document.getElementById("radioKm");
+    //if (inputKm) km = Number(inputKm.value);
+
+    console.log("Solicitando clusters con radio (km):", km);
+
+    // Llamada al backend
+    const url = `https://childcaremap-capabackend.up.railway.app/api/union_find_clusters?R_km=${km}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("Clusters recibidos:", data);
+
+    if (!data.clusters) {
+      alert("Error: backend no devolvió clusters");
+      return;
+    }
+
+    // ----------------------------------------------
+    // LIMPIAR MAPA ANTERIOR ANTES DE DIBUJAR CLUSTERS
+    // ----------------------------------------------
+
+    if (window._mapInstance) {
+      window._mapInstance.remove();
+      window._mapInstance = null;
+    }
+
+    // Crear contenedor del mapa si no existe
+    let mapDiv = document.getElementById("map-container");
+    if (!mapDiv) {
+      mapDiv = document.createElement("div");
+      mapDiv.id = "map-container";
+      mapDiv.style.width = "100%";
+      mapDiv.style.height = "900px";
+      mapDiv.style.border = "2px solid #ccc";
+      mapDiv.style.borderRadius = "12px";
+      mapDiv.style.overflow = "hidden";
+
+      const parent = document.getElementById("sigma-container");
+      parent.innerHTML = "";
+      parent.appendChild(mapDiv);
+    }
+
+    // Crear mapa centrado en Perú
+    const map = L.map(mapDiv).setView([-9.19, -75.0152], 6);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(map);
+
+    // ------------------------------
+    // DIBUJAR TODOS LOS CLUSTERS
+    // ------------------------------
+
+    data.clusters.forEach((c) => {
+      const lat = c.centroid.latitud;
+      const lon = c.centroid.longitud;
+
+      L.circleMarker([lat, lon], {
+        radius: 12,
+        color: "#1d4ed8",
+        fillColor: "#3b82f6",
+        fillOpacity: 0.9,
+        weight: 2,
+      })
+        .addTo(map)
+        .bindPopup(`
+          <b>Grupo:</b> ${c.cluster_id}<br>
+          <b>Pacientes:</b> ${c.members.length}<br>
+          <b>Latitud:</b> ${lat}<br>
+          <b>Longitud:</b> ${lon}
+        `);
+    });
+
+    window._mapInstance = map;
+  } catch (err) {
+    console.error("Error al cargar clusters:", err);
+  }
+}
+
+
+
