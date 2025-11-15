@@ -2,6 +2,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
+import numpy as np
+from sklearn.neighbors import BallTree
+from math import radians
 
 # Crea una instancia de la aplicación
 app = FastAPI(title="ChildCareMap Backend")
@@ -93,3 +96,95 @@ def get_patients():
     conn.close()
 
     return data
+
+# ----------------------------
+# 1) Estructura Union-Find
+# ----------------------------
+class UFDS:
+    def __init__(self, n):
+        self.p = list(range(n))
+        self.r = [0]*n
+
+    def find(self, x):
+        if self.p[x] != x:
+            self.p[x] = self.find(self.p[x])
+        return self.p[x]
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return False
+        if self.r[ra] < self.r[rb]:
+            self.p[ra] = rb
+        elif self.r[ra] > self.r[rb]:
+            self.p[rb] = ra
+        else:
+            self.p[rb] = ra
+            self.r[ra] += 1
+        return True
+
+# ----------------------------
+# 2) Endpoint de agrupamiento
+# ----------------------------
+@app.get("/api/union_find_clusters")
+def get_union_find_clusters(R_km: float = 100.0):
+    """
+    Forma clusters de pacientes basados en proximidad geográfica usando Union-Find.
+    R_km: radio de conexión entre pacientes (kilómetros)
+    """
+    # --- Paso 1: obtener datos desde la BD ---
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT id, name, last_name, latitude, longitude, anemia_value
+        FROM paciente
+    """
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not rows:
+        return {"clusters": []}
+
+    # --- Paso 2: construir arrays de coordenadas ---
+    ids = [r["id"] for r in rows]
+    coords = np.array([[float(r["latitude"]), float(r["longitude"])] for r in rows])
+    coords_rad = np.radians(coords)
+
+    # --- Paso 3: construir BallTree para búsquedas rápidas por radio ---
+    tree = BallTree(coords_rad, metric="haversine")
+    R_rad = R_km / 6371.0088  # conversión a radianes
+
+    uf = UFDS(len(coords))
+
+    # --- Paso 4: unir puntos dentro del radio ---
+    neighbors = tree.query_radius(coords_rad, r=R_rad)
+    for i, neighs in enumerate(neighbors):
+        for j in neighs:
+            if i < j:
+                uf.union(i, j)
+
+    # --- Paso 5: formar clusters y centroides ---
+    clusters_dict = {}
+    for i in range(len(coords)):
+        root = uf.find(i)
+        if root not in clusters_dict:
+            clusters_dict[root] = {"members": [], "latitudes": [], "longitudes": []}
+        clusters_dict[root]["members"].append(ids[i])
+        clusters_dict[root]["latitudes"].append(coords[i][0])
+        clusters_dict[root]["longitudes"].append(coords[i][1])
+
+    clusters = []
+    for idx, c in enumerate(clusters_dict.values()):
+        lat_c = np.mean(c["latitudes"])
+        lon_c = np.mean(c["longitudes"])
+        clusters.append({
+            "cluster_id": idx,
+            "size": len(c["members"]),
+            "centroid": {"latitud": lat_c, "longitud": lon_c},
+            "members": c["members"]
+        })
+
+    return {"n_clusters": len(clusters), "clusters": clusters}
