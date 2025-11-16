@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
 import numpy as np
+import math
 from sklearn.neighbors import BallTree
 from math import radians
 
@@ -127,7 +128,7 @@ class UFDS:
 # 2) Endpoint de agrupamiento
 # ----------------------------
 @app.get("/api/union_find_clusters")
-def get_union_find_clusters(R_km: float = 100.0):
+def get_union_find_clusters(R_km: float, gravedad: str):
     """
     Forma clusters de pacientes basados en proximidad geográfica usando Union-Find.
     R_km: radio de conexión entre pacientes (kilómetros)
@@ -136,9 +137,21 @@ def get_union_find_clusters(R_km: float = 100.0):
     conn = get_connection()
     cursor = conn.cursor()
 
-    query = """
+    if gravedad == "alta":
+        condicion = "anemia_value < 8"
+    elif gravedad == "media":
+        condicion = "anemia_value >= 8 AND anemia_value < 10"
+    elif gravedad == "baja":
+        condicion = "anemia_value >= 10 AND anemia_value < 12"
+    elif gravedad == "none":
+        condicion = "anemia_value >= 12"
+    else:
+        return {"error": "Gravedad inválida"}
+
+
+    query = f"""
         SELECT id, name, last_name, latitude, longitude, anemia_value
-        FROM paciente
+        FROM paciente WHERE {condicion}
     """
     cursor.execute(query)
     rows = cursor.fetchall()
@@ -188,3 +201,108 @@ def get_union_find_clusters(R_km: float = 100.0):
         })
 
     return {"n_clusters": len(clusters), "clusters": clusters}
+
+
+
+# -----------------------------------------
+# Función distancia Haversine (km)
+# -----------------------------------------
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371.0088  # radio de la Tierra
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    lat1 = math.radians(lat1)
+    lat2 = math.radians(lat2)
+
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+    return R * c  # distancia en km
+
+
+# -----------------------------------------
+# UFDS para Kruskal (Union-Find)
+# -----------------------------------------
+class UFDS_UF:
+    def __init__(self, n):
+        self.p = list(range(n))
+        self.r = [0]*n
+
+    def find(self, x):
+        if self.p[x] != x:
+            self.p[x] = self.find(self.p[x])
+        return self.p[x]
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return False
+        if self.r[ra] < self.r[rb]:
+            self.p[ra] = rb
+        elif self.r[ra] > self.r[rb]:
+            self.p[rb] = ra
+        else:
+            self.p[rb] = ra
+            self.r[ra] += 1
+        return True
+
+
+# -----------------------------------------
+# API: MST ENTRE CLUSTERS
+# -----------------------------------------
+@app.get("/api/mst_clusters")
+def mst_clusters(R_km: float, cantidad_Grupo: int,gravedad: str):
+    """
+    Calcula el MST entre los centroides devueltos por /api/union_find_clusters.
+    """
+    # 1) Obtiene los clusters directamente SIN REQUESTS
+    clusters_data = get_union_find_clusters(R_km,gravedad)
+
+    clusters = clusters_data.get("clusters", [])
+
+    clusters = [c for c in clusters if c["size"] >= cantidad_Grupo]
+
+    n = len(clusters)
+
+    if n == 0:
+        return {"mst_edges": [], "message": "No hay clusters para procesar"}
+
+    # 2) Extraer centroides
+    coords = [
+        (c["centroid"]["latitud"], c["centroid"]["longitud"])
+        for c in clusters
+    ]
+
+    # 3) Construir todas las aristas posibles
+    edges = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            lat1, lon1 = coords[i]
+            lat2, lon2 = coords[j]
+            d = haversine(lat1, lon1, lat2, lon2)
+            edges.append((d, i, j))
+
+    edges.sort(key=lambda x: x[0])
+
+    # 4) Kruskal MST
+    uf = UFDS_UF(n)
+    mst = []
+
+    for d, a, b in edges:
+        if uf.union(a, b):
+            mst.append({
+                "cluster_a": a,
+                "cluster_b": b,
+                "distance_km": round(d, 3),
+                "centroid_a": coords[a],
+                "centroid_b": coords[b]
+            })
+        if len(mst) == n - 1:
+            break
+
+    return {
+        "n_clusters": n,
+        "mst_edges": mst
+    }
