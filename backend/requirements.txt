@@ -4,4 +4,3 @@ pydantic
 pymysql
 numpy
 scikit-learn
-math
