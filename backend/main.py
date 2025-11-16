@@ -1,4 +1,4 @@
-# Importa la clase principal de FastAPI 41
+# Importa la clase principal de FastAPI A
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
