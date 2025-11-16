@@ -619,7 +619,7 @@ async function loadCluster(km, cantidadCluster, gravedad) {
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Dibujar las líneas de conexión del MST 3.0
+// Función nueva: Dibujar las líneas de conexión del MST 4.0
 // ------------------------------------------------------------------------
 async function drawMSTLines(map, km, cantidad_Grupo, gravedad) {
   try {
