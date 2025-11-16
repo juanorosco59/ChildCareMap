@@ -1,7 +1,3 @@
-/* =======================
-   Reset & Base
-======================= */
-
 /* Reinicia márgenes, rellenos y establece box-sizing global */
 * {
   margin: 0;
@@ -11,12 +7,14 @@
 
 /* Variables globales (colores, sombras, tamaños) */
 :root {
-  --sidebar-width: 420px;          /* Ancho de la barra lateral */
+  --sidebar-width: 480px;
+  /* Ancho de la barra lateral */
   --card-bg: rgba(255, 255, 255, .95);
   --border: #e5e7eb;
   --text: #111827;
   --muted: #6b7280;
-  --brand: #0d9488;                /* Color principal de marca */
+  --brand: #0d9488;
+  /* Color principal de marca */
   --shadow: 0 10px 30px rgba(0, 0, 0, .10);
 }
 
@@ -39,9 +37,10 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #f9fafb;
+  background: var(--card-bg);
   color: var(--text);
-  overflow: hidden; /* Evita scroll general, solo scroll interno en panel */
+  overflow: hidden;
+  /* Evita scroll general, solo scroll interno en panel */
 }
 
 /* =======================
@@ -51,12 +50,75 @@ body {
 /* Contenedor del mapa (lado derecho) */
 #sigma-container {
   position: fixed;
-  top: 0;
+  top: 1%;
   left: var(--sidebar-width);
   width: calc(100vw - var(--sidebar-width));
   height: 50px;
-  z-index: 1; /* debajo del panel */
-  background: rgb(220, 226, 224);
+  z-index: 1;
+  /* debajo del panel */
+  background: rgb(222, 226, 220);
+  border-radius: 100px;
+
+  /* Centramos horizontalmente */
+
+}
+
+
+.datos-container {
+  position: fixed;
+  top: 10%;
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width) - 40px);
+  min-height: 60px;
+
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+
+
+.resumen-container {
+  position: fixed;
+  top: 10%;
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  min-height: 60px;
+
+
+  border-radius: 14px;
+
+
+
+  align-items: center;
+
+
+
+
+}
+
+#pacient-info-container {
+  position: fixed;
+  top: 85%;
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  height: 100px;
+  z-index: 1;
+  /* debajo del panel */
+  background: rgb(222, 226, 220);
+  border-radius: 100px;
+
+  /* Centramos horizontalmente */
+
 }
 
 /* Panel lateral principal */
@@ -66,7 +128,8 @@ body {
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  z-index: 2; /* sobre el mapa */
+  z-index: 2;
+  /* sobre el mapa */
   padding: 16px;
   overflow-y: auto;
   background: var(--card-bg);
@@ -314,6 +377,7 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
+
   .map-controls button,
   .graph-controls button,
   #map-controls button {
@@ -415,4 +479,225 @@ body {
   .tabs-list {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* Contenedor general de los bloques (UFD y MST) */
+.control-box {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+
+}
+
+
+/* Etiquetas */
+.control-label {
+  min-width: 180px;
+  font-weight: 500;
+}
+
+/* Inputs */
+.control-input {
+  padding: 8px;
+  width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.control-select {
+  padding: 8px;
+  width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+}
+
+/* Botones de acción */
+.control-button {
+  padding: 6px 100px;
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+}
+
+.control-button:hover {
+  background-color: #377150;
+
+}
+
+
+/* Contenedor general */
+.table-container {
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+/* Tabla */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #000;
+  background: #fff;
+  text-align: center;
+}
+
+/* Encabezado */
+.data-table thead tr {
+  background: #eee;
+}
+
+.data-table th {
+  padding: 8px;
+  border: 1px solid #ccc;
+  font-weight: 600;
+}
+
+/* Filas */
+.data-table td {
+  padding: 6px;
+  border: 1px solid #ccc;
+}
+
+/* Estado de carga */
+.table-loading {
+  padding: 12px;
+  text-align: center;
+  color: #666;
+}
+
+/* Error */
+.table-error {
+  color: red;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+}
+
+
+/*Estilos de la vista resumen*/
+
+/* Contenedor del resumen */
+.resumen-card {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  max-width: 900px;
+  margin: 20px auto;
+}
+
+/* Títulos */
+.resumen-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.resumen-subtitle {
+  font-size: 18px;
+  margin-top: 25px;
+  margin-bottom: 10px;
+  color: #374151;
+}
+
+/* Estadísticas generales */
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.resumen-item {
+  background: #f9fafb;
+  padding: 18px;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.resumen-item h3 {
+  font-size: 22px;
+  margin: 0;
+  color: #111827;
+}
+
+.resumen-item p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Lista de anemia */
+.resumen-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.resumen-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.r-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+/* COLORES REALZADOS */
+.r-dot.red {
+  background: #ef4444;
+}
+
+.r-dot.orange {
+  background: #f97316;
+}
+
+.r-dot.yellow {
+  background: #facc15;
+}
+
+.r-dot.green {
+  background: #22c55e;
+}
+
+.r-label {
+  flex: 1;
+  font-size: 15px;
+  color: #1e293b;
+  /* gris oscuro → muy legible */
+  margin-left: 8px;
+}
+
+.r-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.resumen-alert {
+  flex: 1;
+  font-size: 15px;
+  color: #1e293b;
+  /* gris oscuro → muy legible */
+  margin-left: 8px;
 }

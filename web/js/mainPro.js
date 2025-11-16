@@ -1,91 +1,43 @@
 // Importa Graphology para manejar el grafo en memoria
 import Graph from "graphology";
-// Importa el parser para leer archivos GEXF en el navegador
 import { parse } from "graphology-gexf/browser";
+
 // Importa Sigma para renderizar el grafo
 import Sigma from "sigma";
 
-// Mdulos para mapas
+// Carga de módulos  para mapas
 import bindLeafletLayer from "@sigma/layer-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 
 export default function main() {
-  // Obtiene todos los botones de pestañas (Resumen / Mapa / Datos)
+  // Obtener todos los botones de pestañas (Resumen / Mapa / Datos)
   const triggers = [...document.querySelectorAll(".tab-trigger")];
-  // Obtiene todos los paneles de contenido asociados a las pestañas
   const contents = [...document.querySelectorAll(".tab-content")];
-  // Referencia al contenedor donde se mostrará el mapa (y/o contenido de otras pestañas)
-  const sigmaContainer = document.getElementById("sigma-container");
 
-  // Localiza el bloque de controles del mapa (clase alternativa por compatibilidad)
+  // Referencia a los contenedores
+  const sigmaContainer = document.getElementById("sigma-container");
+  const pacienteInfoContainer = document.getElementById("pacient-info-container");
+  const datosContainer = document.getElementById("datos-container");
+  const resumenContainer = document.getElementById("resumen-container");
+
+  // Localizador de bloque de controles del mapa
   const mapControls =
     document.querySelector(".map-controls") ||
     document.querySelector(".graph-controls") ||
     document.getElementById("map-controls");
 
   // Mantiene la instancia global de Sigma para controlar su ciclo de vida
+
   let renderer = null;
-  // Guarda una función de limpieza opcional para destruir recursos cuando sea necesario
   let cleanup = null;
-
   let modoCluster = false;
-
-  // ----------------------------------------------------------------------------------
-  // Función: Mostrar datos provenientes del backend dentro de #sigma-container
-  // ----------------------------------------------------------------------------------
-  async function displayBackendData() {
-    // Verifica que el contenedor exista antes de manipularlo
-    if (!sigmaContainer) {
-      console.warn("No se encontró el elemento con ID 'sigma-container'.");
-      return;
-    }
-
-    // Muestra un indicador de carga la primera vez o cuando el contenedor está vacío
-    if (sigmaContainer.textContent === "") {
-      sigmaContainer.innerHTML =
-        '<p style="padding:10px; text-align:center; color:#666;">Cargando datos del backend...</p>';
-    }
-
-    // Llama al backend y espera la respuesta
-    const result = await callAPIBackend();
-
-    // Verifica si se recibió un resultado válido
-    if (result) {
-      // Prepara la salida según el formato del backend
-      let contentToDisplay = "";
-
-      // Si el backend trae una clave message, se muestra en un bloque limpio
-      if (typeof result === "object" && result !== null && result.message) {
-        contentToDisplay = `
-          <div style="padding:20px; text-align:center; border:1px solid #0b0a0aff; background:#ffffff;">
-            <h3 style="margin:0 0 8px 0; color:#111;">Mensaje del Backend</h3>
-            <p style="font-size:1.05em; color:#333; margin:0;">${result.message}</p>
-          </div>`;
-      } else {
-        // Si no hay message, se muestra el JSON crudo de manera legible
-        contentToDisplay = `
-          <div style="padding:14px; border:1px solid #100d0dff; background:#ffffff;">
-            <h3 style="margin:0 0 8px 0; color:#111;">Respuesta - FastAPI Python</h3>
-            <pre style="margin:0; color:#111">${JSON.stringify(result, null, 2)}</pre>
-          </div>`;
-      }
-
-      // Inserta el contenido formateado en el contenedor
-      sigmaContainer.innerHTML = contentToDisplay;
-    } else {
-      // Si la llamada falla, muestra un mensaje de error visible
-      sigmaContainer.innerHTML =
-        '<p style="color:#b91c1c; padding:12px; border:1px solid #110909ff; background:#fef2f2; text-align:center;"><strong>Error:</strong> No se pudo cargar la información del backend.</p>';
-    }
-  }
 
   // ----------------------------------------------------------------------------------
   // Función: Destruir instancia de Sigma cuando se va a reutilizar el contenedor
   // ----------------------------------------------------------------------------------
   function destroySigma() {
-    // Si existe una instancia activa, se detiene y libera
     if (renderer) {
       renderer.kill();
       renderer = null;
@@ -114,21 +66,25 @@ export default function main() {
     if (name === "mapa") {
       // Muestra el contenedor del mapa
       sigmaContainer.style.display = "block";
+      pacienteInfoContainer.style.display = "block";
+
+      datosContainer.style.display = "none";
+
       // Muestra los controles solo si existen
       if (mapControls) mapControls.style.display = "flex";
 
       // Carga Sigma solo la primera vez; si ya existe, refresca el render
-      //if (!renderer) {
-      //  await loadSigma();
-      //} else {
-      //  renderer.refresh?.();
-      //}
+      if (!renderer) {
+        await loadSigma();
+      } else {
+        renderer.refresh?.();
+      }
 
       if (!renderer) {
         if (modoCluster) {
           const kmInput = document.getElementById("input-km");
           const km = Number(kmInput?.value || 10);
-          await loadCluster(km);
+          await loadCluster(km, cantidadCluster, gravedad);
         } else {
           await loadSigma();
         }
@@ -145,10 +101,25 @@ export default function main() {
       // Limpia el contenedor antes de inyectar el nuevo contenido
       sigmaContainer.innerHTML = "";
       // Asegura que el contenedor sea visible para mostrar los datos
-      sigmaContainer.style.display = "block";
+      sigmaContainer.style.display = "none";
+      pacienteInfoContainer.style.display = "none";
+      datosContainer.style.display = "block";
+
       // Invoca la función que obtiene e inserta los datos del backend
       //displayBackendData();
       displayTableFromBackend();
+
+    }
+
+    else if (name === "resumen") {
+      destroySigma();
+      sigmaContainer.innerHTML = "";
+      sigmaContainer.style.display = "none";
+      pacienteInfoContainer.style.display = "none";
+      datosContainer.style.display = "none";
+      resumenContainer.style.display = "block";
+
+      displayResumenFromBackend();
 
     }
     // Si la pestaña es "resumen" u otra, se oculta y limpia el contenedor
@@ -169,15 +140,14 @@ export default function main() {
   );
 
   // Define la pestaña inicial al cargar (puedes cambiar a "mapa" si lo prefieres)
-  const initialTab = "mapa";
-
-
+  const initialTab = "resumen";
   // Activa la pestaña inicial
   activateTab(initialTab);
 
   // ----------------------------------------------------------------------------------
   // Función: Cargar Sigma y enlazar controles (Zoom/Reset + Umbral de etiquetas)
   // ----------------------------------------------------------------------------------
+
   async function loadSigmaPre() {
     try {
       // Solicita el archivo GEXF al servidor
@@ -317,32 +287,8 @@ export default function main() {
         .bindPopup("<b>Lima</b><br>Capital del Perú")
         .openPopup();
 
-      // Agrega marcadores fijos para otras ciudades importantes
-      //const cities = [
-      //  { name: "Arequipa", coords: [-16.4090, -71.5375], color: "#3b82f6" },
-      //  { name: "Cusco", coords: [-13.5319, -71.9675], color: "#10b981" },
-      //  { name: "Trujillo", coords: [-8.1117, -79.0288], color: "#f59e0b" },
-      //  { name: "Piura", coords: [-5.1945, -80.6328], color: "#8b5cf6" },
-      //  { name: "Iquitos", coords: [-3.7491, -73.2538], color: "#06b6d4" },
-      //  { name: "Puno", coords: [-15.8402, -70.0219], color: "#f43f5e" },
-      //  { name: "Chiclayo", coords: [-6.7736, -79.8417], color: "#22c55e" },
-      //  { name: "Tacna", coords: [-18.0066, -70.2463], color: "#9333ea" },
-      //  { name: "Huancayo", coords: [-12.0686, -75.2103], color: "#14b8a6" },
-      //];
 
-      // Dibuja los marcadores de cada ciudad en el mapa
-      //cities.forEach((city) => {
-      //  L.circleMarker(city.coords, {
-      //    radius: 8,
-      //    color: city.color,
-      //    fillColor: city.color,
-      //    fillOpacity: 0.85,
-      //  })
-      //    .addTo(map)
-      //    .bindPopup(`<b>${city.name}</b>`);
-      //});
-
-      // --- Cargar pacientes desde el backend ---
+      // Cargar pacientes desde el backend
       const data = await callAPIBackend("/api/pacientes");
 
       // Si hay datos válidos, dibujar cada paciente en el mapa
@@ -391,6 +337,7 @@ export default function main() {
   // ----------------------------------------------------------------------------------
   // Función auxiliar: Llamar al API del backend y devolver el JSON
   // ----------------------------------------------------------------------------------
+
   async function callAPIBackendPre() {
     // Define la URL del endpoint del backend
     const apiUrlPRE = "https://childcaremap-capabackend.up.railway.app/api/saludo";
@@ -420,7 +367,7 @@ export default function main() {
   }
 
   // ======================================================================
-  // CAPTURAR BOTÓN "Ejecutar UFD" Y LEER INPUT-KM
+  // Capturar evento desde el botón y demás parámetros de entrada
   // ======================================================================
   const btnEjecutarUFD = document.getElementById("btn-ejecutar-ufd");
 
@@ -429,11 +376,18 @@ export default function main() {
       const kmInput = document.getElementById("input-km");
       const km = Number(kmInput?.value || 10);
 
+      const cantidadGrupo = document.getElementById("input-cantidad-grupo");
+      const cantidadCluster = Number(cantidadGrupo?.value || 10);
+
+      const gravedad = document.getElementById("select-gravedad");
+      const gravedadAnemia = (gravedad?.value);
+
+
       modoCluster = true;   // <- ACTIVAS MODO CLUSTER
 
       console.log("🔵 Ejecutando UFD con radio:", km, "km");
 
-      loadCluster(km);
+      loadCluster(km, cantidadCluster, gravedadAnemia);
     });
   }
 
@@ -441,8 +395,9 @@ export default function main() {
 }
 
 // ==================================================================================
-// Función auxiliar: consulta el backend (FastAPI) y devuelve el JSON recibido
+// Función auxiliar: consulta el backend /api/pacientes
 // ==================================================================================
+
 async function callAPIBackend(endpoint = "/api/pacientes") {
 
   // URL base del backend (Railway o localhost)
@@ -475,10 +430,12 @@ async function callAPIBackend(endpoint = "/api/pacientes") {
     return null; // Devuelve null para evitar romper el flujo
   }
 }
+
 // ====================================================================
-// Mostrar datos del backend como TABLA en #sigma-container
+// Mostrar datos del backend como tabla
 // ====================================================================
-async function displayTableFromBackend() {
+
+async function displayTableFromBackendPre() {
   const container = document.getElementById("sigma-container");
 
   if (!container) {
@@ -503,7 +460,7 @@ async function displayTableFromBackend() {
 
   // Construye tabla
   let html = `
-    <table style="width:100%; border-collapse:collapse; font-size:14px; color:#000;text-align:center;">
+    <table style="width:100%; border-collapse:collapse; font-size:14px; color:#000;text-align:center;background:#fff;">
       <thead>
         <tr style="background:#eee;">
           <th style="padding:8px; border:1px solid #ccc;">ID</th>
@@ -543,6 +500,7 @@ async function displayTableFromBackend() {
 // ==================================================================================
 // Función: determinar color según nivel de anemia (al final del archivo)
 // ==================================================================================
+
 function anemiaToColor(value) {
   if (value < 8) return "#ef4444";      // Rojo — Grave / riesgo vital
   if (value < 10) return "#f97316";     // Naranja — Moderada
@@ -550,10 +508,22 @@ function anemiaToColor(value) {
   return "#22c55e";                     // Verde — Normal
 }
 
+// ==================================================================================
+// Función: determinar color según nivel de gravedad
+// ==================================================================================
+
+function anemiaToColorByGravity(value) {
+  if (value == 'alta') return "#ef4444";      // Rojo — Grave / riesgo vital
+  if (value == 'media') return "#f97316";     // Naranja — Moderada
+  if (value == 'baja') return "#facc15";     // Amarillo — Leve
+  return "#22c55e";                     // Verde — Normal
+}
+
 // ------------------------------------------------------------------------
-// FUNCIÓN NUEVA: Cargar clusters desde /api/union_find_clusters
+// Función: Cargar grupos desde /api/union_find_clusters
 // ------------------------------------------------------------------------
-async function loadCluster(km = 10) {
+
+async function loadCluster(km, cantidadCluster, gravedad) {
   try {
     // Leer radio desde el input #radioKm (si existe)
     //let km = 10;
@@ -563,10 +533,13 @@ async function loadCluster(km = 10) {
     console.log("Solicitando clusters con radio (km):", km);
 
     // Llamada al backend
-    const url = `https://childcaremap-capabackend.up.railway.app/api/union_find_clusters?R_km=${km}`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/union_find_clusters?R_km=${km}&gravedad=${gravedad}`;
+    //const url = `http://127.0.0.1:8000/api/union_find_clusters?R_km=${km}&gravedad=${gravedad}`;
 
     const res = await fetch(url);
     const data = await res.json();
+
+
 
     console.log("Clusters recibidos:", data);
 
@@ -575,9 +548,9 @@ async function loadCluster(km = 10) {
       return;
     }
 
-    // ----------------------------------------------
-    // LIMPIAR MAPA ANTERIOR ANTES DE DIBUJAR CLUSTERS
-    // ----------------------------------------------
+
+    // Limpiar mapa anterior previo a la carga nueva
+
 
     if (window._mapInstance) {
       window._mapInstance.remove();
@@ -585,6 +558,7 @@ async function loadCluster(km = 10) {
     }
 
     // Crear contenedor del mapa si no existe
+
     let mapDiv = document.getElementById("map-container");
     if (!mapDiv) {
       mapDiv = document.createElement("div");
@@ -601,24 +575,25 @@ async function loadCluster(km = 10) {
     }
 
     // Crear mapa centrado en Perú
+
     const map = L.map(mapDiv).setView([-9.19, -75.0152], 6);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors"
     }).addTo(map);
 
-    // ------------------------------
-    // DIBUJAR TODOS LOS CLUSTERS
-    // ------------------------------
 
-    data.clusters.forEach((c) => {
+    // Crear los clusteres 
+
+
+    data.clusters.filter(c => c.members.length >= cantidadCluster).forEach((c) => {
       const lat = c.centroid.latitud;
       const lon = c.centroid.longitud;
 
       L.circleMarker([lat, lon], {
         radius: 12,
-        color: "#1d4ed8",
-        fillColor: "#3b82f6",
+        color: anemiaToColorByGravity(gravedad),
+        fillColor: anemiaToColorByGravity(gravedad),
         fillOpacity: 0.9,
         weight: 2,
       })
@@ -631,6 +606,9 @@ async function loadCluster(km = 10) {
         `);
     });
 
+    await drawMSTLines(map, km, cantidadCluster, gravedad);
+
+
     window._mapInstance = map;
   } catch (err) {
     console.error("Error al cargar clusters:", err);
@@ -639,3 +617,259 @@ async function loadCluster(km = 10) {
 
 
 
+
+// ------------------------------------------------------------------------
+// Función nueva: Dibujar las líneas del MST
+// ------------------------------------------------------------------------
+async function drawMSTLines(map, km, cantidad_Grupo, gravedad) {
+  try {
+    const url = "https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
+    //const url = `http://127.0.0.1:8000/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+
+
+    if (!data.mst_edges) {
+      console.error("Error: backend no devolvió mst_edges");
+      return;
+    }
+
+    data.mst_edges.forEach(edge => {
+      const A = edge.centroid_a;
+      const B = edge.centroid_b;
+
+      L.polyline([A, B], {
+        color: "#e63946",
+        weight: 3,
+        opacity: 0.8,
+      })
+        .addTo(map)
+        .bindTooltip(`${edge.distance_km} km`, { permanent: false });
+    });
+
+  } catch (err) {
+    console.error("Error al dibujar MST:", err);
+  }
+}
+
+// ------------------------------------------------------------------------
+// Función nueva: Mostrar datos desde /api/pacientes
+// ------------------------------------------------------------------------
+
+
+async function displayTableFromBackend() {
+  const container = document.getElementById("datos-container");
+
+  if (!container) {
+    console.error("No existe el contenedor #datos-container");
+    return;
+  }
+
+  // Mensaje de carga
+  container.innerHTML = `<div class="table-loading">Cargando datos...</div>`;
+
+  const data = await callAPIBackend("/api/pacientes");
+
+  if (!data || !Array.isArray(data)) {
+    container.innerHTML = `<div class="table-error">Error: No se pudo obtener información del backend</div>`;
+    return;
+  }
+
+  // Construcción de tabla
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Paciente</th>
+          <th>Edad</th>
+          <th>Latitud</th>
+          <th>Longitud</th>
+          <th>Anemia</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.forEach((p) => {
+    html += `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td>${p.age}</td>
+        <td>${p.coords[0]}</td>
+        <td>${p.coords[1]}</td>
+        <td>${p.anemia_value}</td>
+        <td>${p.created_at}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+
+// ------------------------------------------------------------------------
+// Función nueva: Mostrar resumen desde /api/pacientes
+// ------------------------------------------------------------------------
+
+
+async function displayResumenFromBackendPre() {
+  const container = document.getElementById("resumen-container");
+  if (!container) {
+    console.error("No existe el contenedor #datos-container");
+    return;
+  }
+  // Mensaje de carga
+  container.innerHTML = `<div class="table-loading">Cargando datos...</div>`;
+  const data = await callAPIBackend("/api/pacientes");
+
+  if (!data || !Array.isArray(data)) {
+    container.innerHTML = `<div class="table-error">Error: No se pudo obtener información del backend</div>`;
+    return;
+  }
+
+  // Construcción de tabla
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Paciente</th>
+          <th>Edad</th>
+          <th>Latitud</th>
+          <th>Longitud</th>
+          <th>Anemia</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.forEach((p) => {
+    html += `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td>${p.age}</td>
+        <td>${p.coords[0]}</td>
+        <td>${p.coords[1]}</td>
+        <td>${p.anemia_value}</td>
+        <td>${p.created_at}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+// ------------------------------------------------------------------------
+// Función nueva: Mostrar resumen desde /api/pacientes
+// ------------------------------------------------------------------------
+
+
+async function displayResumenFromBackend() {
+  const container = document.getElementById("resumen-container");
+  if (!container) return;
+
+  container.innerHTML = `<div class="resumen-loading">Cargando información...</div>`;
+
+  const data = await callAPIBackend("/api/pacientes");
+  if (!data || !Array.isArray(data)) {
+    container.innerHTML = `<div class="resumen-error">No se pudo cargar la información.</div>`;
+    return;
+  }
+
+
+  // Cálculos
+
+  const total = data.length;
+  const edades = data.map(p => p.age);
+  const anemia = data.map(p => p.anemia_value);
+
+  const promEdad = (edades.reduce((a, b) => a + b, 0) / total).toFixed(1);
+  const promAnemia = (anemia.reduce((a, b) => a + b, 0) / total).toFixed(1);
+
+  const riesgoCritico = anemia.filter(v => v < 8).length;
+  const riesgoModerado = anemia.filter(v => v >= 8 && v < 10).length;
+  const riesgoLeve = anemia.filter(v => v >= 10 && v < 12).length;
+  const normal = anemia.filter(v => v >= 12).length;
+
+
+  // HTML Mejorado
+
+  container.innerHTML = `
+    <div class="resumen-card">
+
+      <h2 class="resumen-title">Resumen general de pacientes</h2>
+
+      <div class="resumen-grid">
+
+        <div class="resumen-item">
+          <h3>${total}</h3>
+          <p>Total de Pacientes</p>
+        </div>
+
+        <div class="resumen-item">
+          <h3>${promEdad}</h3>
+          <p>Edad Promedio</p>
+        </div>
+
+        <div class="resumen-item">
+          <h3>${promAnemia} g/dL</h3>
+          <p>Hemoglobina Promedio</p>
+        </div>
+
+      </div>
+
+      <h3 class="resumen-subtitle">Estado de anemia</h3>
+
+<ul class="resumen-list">
+  <li>
+    <span class="r-dot red"></span>
+    <span class="r-label">Riesgo crítico &lt; 8 g/dL</span>
+    <strong class="r-value">${riesgoCritico}</strong>
+  </li>
+
+  <li>
+    <span class="r-dot orange"></span>
+    <span class="r-label">Moderada 8 - 9.9 g/dL</span>
+    <strong class="r-value">${riesgoModerado}</strong>
+  </li>
+
+  <li>
+    <span class="r-dot yellow"></span>
+    <span class="r-label">Leve 10 - 11.9 g/dL</span>
+    <strong class="r-value">${riesgoLeve}</strong>
+  </li>
+
+  <li>
+    <span class="r-dot green"></span>
+    <span class="r-label">Normal ≥ 12 g/dL</span>
+    <strong class="r-value">${normal}</strong>
+  </li>
+</ul>
+
+
+
+      <div class="resumen-alert">
+        ${riesgoCritico > 0
+      ? `Se identificaron <strong>${riesgoCritico}</strong> pacientes en nivel crítico (riesgo vital).`
+      : `No se detectaron pacientes en riesgo crítico.`}
+      </div>
+
+    </div>
+  `;
+}

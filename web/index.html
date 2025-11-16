@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <!-- Alert -->
+      <!-- Alerta -->
       <div class="alert alert-critical">
         <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2">
@@ -39,33 +39,35 @@
         </svg>
         <div class="alert-content">
           <strong>Alerta de riesgo crítico</strong><br>
-          Hay 5 comunidades con nivel de riesgo crítico que requieren intervención inmediata.
+          Valores de hemoglobina por debajo del límite crítico indican que el paciente corre serio riesgo y necesita
+          intervención inmediata.
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Cards -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Anemia crónica</div>
-          <div class="stat-value">11.5%</div>
+          <div class="stat-value">🔴</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Anemia regular</div>
-          <div class="stat-value">36.7%</div>
+          <div class="stat-label">Anemia moderada</div>
+          <div class="stat-value">🟠</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Anemia Aguda</div>
-          <div class="stat-value">0.4%</div>
+          <div class="stat-label">Anemia Leve</div>
+          <div class="stat-value">🟡</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Comunidades críticas</div>
-          <div class="stat-value">5</div>
+          <div class="stat-label">Anemia normal</div>
+          <div class="stat-value">🟢</div>
         </div>
       </div>
 
       <!-- Tabs -->
       <div class="tabs">
         <div class="tabs-list">
+
           <button class="tab-trigger" data-tab="resumen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -93,65 +95,63 @@
         </div>
 
         <div class="tab-content" data-content="resumen">
-          <div class="tab-panel">Vista de resumen</div>
+          <div class="tab-panel">
+            <h3>Resumen de datos</h3>
+
+          </div>
         </div>
 
         <div class="tab-content active" data-content="mapa">
           <div class="tab-panel">
             <h3>Mapa de comunidades vulnerables</h3>
-            <p>Distribución geográfica de niños con anemia en el Perú</p>
+            <p>Análisis geográfico de anemia infantil en el Perú</p>
 
-            <!-- CAMPO DE ENTRADA Y BOTÓN (UFD) -->
-            <div style="
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 0;
-">
-              <label for="input-km" style="min-width: 180px; font-weight: 500;">
+            <!-- Inicio - Entrada de radio de búsqueda -->
+            <div id="ufd-controls" class="control-box">
+              <label for="input-km" class="control-label">
                 Radio de búsqueda (km):
               </label>
-
-              <input type="number" id="input-km" name="radio_km" min="1" max="100" value="10"
-                style="padding: 6px; width: 90px;">
-
-              <button id="btn-ejecutar-ufd" style="padding: 6px 14px; background-color: #007bff; color: white;
-           border: none; border-radius: 5px; cursor: pointer;">
-                Ejecutar UFD
-              </button>
+              <input type="number" id="input-km" name="radio_km" min="1" max="100" value="100" class="control-input">
             </div>
-            <!-- FIN CAMPO DE ENTRADA Y BOTÓN -->
-
-            <!-- CAMPO DE ENTRADA Y BOTÓN (MST) -->
-            <div style="
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 0;
-">
-              <label for="input-km" style="min-width: 180px; font-weight: 500;">
-                Criterio MST:
+            <!-- Fin - Entrada de radio de búsqueda -->
+            <!-- Inicio - Entrada de pacientes por grupo -->
+            <div id="ufd-controls" class="control-box">
+              <label for="input-cantidad-grupo" class="control-label">
+                Pacientes por grupo:
               </label>
-
-              <input type="number" id="input-km" name="radio_km" min="1" max="5" value="1"
-                style="padding: 6px; width: 90px;">
-
-              <button id="btn-ejecutar-ufd" style="padding: 6px 14px; background-color: #007bff; color: white;
-           border: none; border-radius: 5px; cursor: pointer;">
-                Ejecutar MST
+              <input type="number" id="input-cantidad-grupo" name="cantidad_grupo" min="1" max="50" value="2"
+                class="control-input">
+            </div>
+            <!-- Fin - Entrada de pacientes por grupo -->
+            <!-- Inicio - Entrada de gravedad -->
+            <div id="gravedad-controls" class="control-box">
+              <label for="select-gravedad" class="control-label">
+                Prioridad por gravedad:
+              </label>
+              <select id="select-gravedad" class="control-select">
+                <option value="none" selected>Sin prioridad</option>
+                <option value="alta">Alta prioridad (Grave)</option>
+                <option value="media">Media (Moderada)</option>
+                <option value="baja">Baja (Leve)</option>
+              </select>
+            </div>
+            <!-- Fin - Entrada de gravedad -->
+            <div>
+              <br>
+              <button id="btn-ejecutar-ufd" class="control-button">
+                Calcular
               </button>
             </div>
-            <!-- FIN CAMPO DE ENTRADA Y BOTÓN -->
-
-
 
           </div>
         </div>
 
         <div class="tab-content" data-content="datos">
-          <div class="tab-panel">Vista de datos</div>
+          <div class="tab-panel">
+            <div class="tab-panel">
+              <h3>Vista de datos</h3>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -159,7 +159,11 @@
   </div>
 
   <div id="sigma-container"></div>
+  <div id="pacient-info-container"></div>
+  <div id="datos-container" class="datos-container">
+  </div>
 
+  <div id="resumen-container" class="resumen-container"></div>
 
   <!--
   <div class="map-controls">
@@ -171,7 +175,7 @@
       <input type="range" id="labels-threshold" min="0" max="10" step="1" />
     </label>
   </div>
--->
+  -->
 
   <script type="module">
     import main from "./js/mainPro.js";
