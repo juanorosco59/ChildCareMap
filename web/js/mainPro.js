@@ -623,7 +623,7 @@ async function loadCluster(km, cantidadCluster, gravedad) {
 // ------------------------------------------------------------------------
 async function drawMSTLines(map, km, cantidad_Grupo, gravedad) {
   try {
-    const url = "https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
     //const url = `http://127.0.0.1:8000/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
     const res = await fetch(url);
     const data = await res.json();
