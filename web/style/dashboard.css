@@ -40,12 +40,11 @@ body {
   background: var(--card-bg);
   color: var(--text);
   overflow: hidden;
-  /* Evita scroll general, solo scroll interno en panel */
 }
 
 /* =======================
    Layout: Sidebar + Mapa
-======================= */
+   ======================= */
 
 /* Contenedor del mapa (lado derecho) */
 #sigma-container {
@@ -55,11 +54,9 @@ body {
   width: calc(100vw - var(--sidebar-width));
   height: 50px;
   z-index: 1;
-  /* debajo del panel */
   background: rgb(222, 226, 220);
   border-radius: 100px;
 
-  /* Centramos horizontalmente */
 
 }
 
@@ -93,17 +90,8 @@ body {
   left: var(--sidebar-width);
   width: calc(100vw - var(--sidebar-width));
   min-height: 60px;
-
-
   border-radius: 14px;
-
-
-
   align-items: center;
-
-
-
-
 }
 
 #pacient-info-container {
@@ -147,7 +135,7 @@ body {
 
 /* =======================
    Header (Encabezado)
-======================= */
+   ======================= */
 
 .header {
   display: flex;
@@ -182,7 +170,7 @@ body {
 
 /* =======================
    Alertas
-======================= */
+   ======================= */
 
 .alert {
   display: flex;
@@ -215,7 +203,7 @@ body {
 
 /* =======================
    Estadísticas
-======================= */
+   ======================= */
 
 .stats-grid {
   display: grid;
@@ -255,7 +243,7 @@ body {
 
 /* =======================
    Pestañas (Tabs)
-======================= */
+   ====================== */
 
 .tabs {
   width: 100%;
@@ -341,7 +329,7 @@ body {
 
 /* =======================
    Controles del mapa
-======================= */
+   ======================= */
 
 .map-controls,
 .graph-controls,
@@ -418,7 +406,7 @@ body {
 
 /* =======================
    Responsive (Adaptativo)
-======================= */
+   ======================= */
 
 /* Pantallas medianas */
 @media (max-width: 1024px) {
@@ -586,6 +574,7 @@ body {
 /*Estilos de la vista resumen*/
 
 /* Contenedor del resumen */
+
 .resumen-card {
   background: #ffffff;
   padding: 28px;
@@ -596,6 +585,7 @@ body {
 }
 
 /* Títulos */
+
 .resumen-title {
   font-size: 22px;
   font-weight: 700;
@@ -611,6 +601,7 @@ body {
 }
 
 /* Estadísticas generales */
+
 .resumen-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -638,6 +629,7 @@ body {
 }
 
 /* Lista de anemia */
+
 .resumen-list {
   list-style: none;
   padding: 0;
@@ -663,7 +655,8 @@ body {
   margin-right: 10px;
 }
 
-/* COLORES REALZADOS */
+/* Colores realzados */
+
 .r-dot.red {
   background: #ef4444;
 }
@@ -684,7 +677,6 @@ body {
   flex: 1;
   font-size: 15px;
   color: #1e293b;
-  /* gris oscuro → muy legible */
   margin-left: 8px;
 }
 
@@ -698,6 +690,5 @@ body {
   flex: 1;
   font-size: 15px;
   color: #1e293b;
-  /* gris oscuro → muy legible */
   margin-left: 8px;
 }
