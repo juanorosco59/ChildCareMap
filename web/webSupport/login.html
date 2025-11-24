@@ -1,53 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iniciar Sesión - ChildCareMap</title>
 
   <!-- Enlace al archivo CSS principal -->
-  <link rel="stylesheet" href="style/home.css" />
+  <link rel="stylesheet" href="../style/login.css" />
 </head>
 
 <body>
-  
+
   <!-- // Contenedor principal del login -->
   <div class="login-container">
-    
-    <!-- // Encabezado con el logo y título -->
+
     <div class="login-header">
       <div class="logo-icon">
-        <!-- // Ícono representativo del proyecto -->
         <svg width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="none">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+          </path>
         </svg>
       </div>
       <h1>ChildCareMap</h1>
       <p>Sistema de mapeo de anemia infantil</p>
     </div>
 
-    <!-- // Tarjeta de inicio de sesión -->
     <div class="login-card">
-      
-      <!-- // Formulario de inicio de sesión -->
+
       <form class="login-form" id="login-form">
-        
+
         <!-- // Campo de correo electrónico -->
         <div class="form-group">
-          <label for="email">Correo Electrónico</label>
+          <label for="email">Correo electrónico</label>
           <div class="input-wrapper">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
               <rect x="2" y="4" width="20" height="16" rx="2"></rect>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
             </svg>
-            <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              placeholder="usuario.correo@childcaremap.pe"
-              required
-              autocomplete="email"
-            >
+            <input type="email" id="email" name="email" placeholder="usuario.correo@childcaremap.pe" required
+              autocomplete="email">
           </div>
         </div>
 
@@ -55,18 +49,13 @@
         <div class="form-group">
           <label for="password">Contraseña</label>
           <div class="input-wrapper">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            <input 
-              type="password" 
-              id="password" 
-              name="password" 
-              placeholder="••••••••"
-              required
-              autocomplete="current-password"
-            >
+            <input type="password" id="password" name="password" placeholder="••••••••" required
+              autocomplete="current-password">
           </div>
         </div>
 
@@ -85,26 +74,24 @@
   </div>
 
   <script>
-    // Referencia al formulario
     const loginForm = document.getElementById('login-form');
-    
-    // Evento de envío del formulario
+
     loginForm.addEventListener('submit', (e) => {
-      e.preventDefault(); // Evita que el formulario recargue la página
-      
-    // Obtención de los valores del formulario
+      e.preventDefault();
+
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      
-    // Aquí se deberían enviar las credenciales al backend para validación
 
       console.log('Intento de inicio de sesión:', { email, password });
+
+      // Guarda la sesión
+      localStorage.setItem("logged", "yes");
       
-      setTimeout(() => {
-      //  window.location.href = './indexBackUp.html'; 
-      }, 500);
+      // Vuelve al index principal
+      window.location.href = "/index.html";
     });
   </script>
 
 </body>
+
 </html>
