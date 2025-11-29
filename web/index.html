@@ -16,7 +16,7 @@
       const logged = localStorage.getItem("logged");
 
       if (logged !== "yes") {
-        window.location.href = `${location.origin}/webSupport/login.html`;
+        window.location.href = "./webSupport/login.html";
       }
     });
   </script>
@@ -208,10 +208,10 @@
   <script>
     document.getElementById("btn-logout").addEventListener("click", () => {
       localStorage.removeItem("logged");
-      window.location.href = `${location.origin}/webSupport/login.html`;
+      window.location.href = "./webSupport/login.html";
     });
   </script>
-  
+
 </body>
 
 </html>
