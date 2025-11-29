@@ -74,26 +74,17 @@
   </div>
 
   <script>
-
-    // Evitar que usuarios logueados visiten login
-    document.addEventListener("DOMContentLoaded", () => {
-      const logged = localStorage.getItem("logged");
-
-      if (logged === "yes") {
-        window.location.href = `${location.origin}/index.html`;
-      }
-    });
-
-    // Acción del formulario
     const loginForm = document.getElementById('login-form');
 
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
+      // Registrar sesión
       localStorage.setItem("logged", "yes");
-      window.location.href = "../index.html";
-    });
 
+      // Redirigir al INDEX con ruta absoluta
+      window.location.href = `${location.origin}/index.html`;
+    });
   </script>
 </body>
 
