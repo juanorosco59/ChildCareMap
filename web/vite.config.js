@@ -13,7 +13,6 @@ import { defineConfig } from 'vite';
 //
 
 export default defineConfig({
-  root: 'web',
   preview: {
     allowedHosts: ['childcaremap-capafrontendqa.up.railway.app'],
     host: '0.0.0.0',
