@@ -1234,6 +1234,6 @@ def bellman_paths_V1(R_km: float,
 
 
 
-
+#Notas
 
 
