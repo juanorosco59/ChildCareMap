@@ -10,7 +10,7 @@
 </head>
 
 <body>
-
+  <!-- Inicio
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const logged = localStorage.getItem("logged");
@@ -23,27 +23,25 @@
       }
     });
   </script>
+  -->
 
   <div class="dashboard-panel">
     <div class="dashboard-container">
 
       <!-- Sección: Header -->
       <div class="header">
-        <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        </div>
+
         <div class="logo-text">
-          <h1>ChildCareMap</h1>
+          <h2>ChildCareMap</h2>
           <p>Sistema de mapeo de anemia</p>
         </div>
+        <!-- 
         <button id="btn-logout" class="logout-button">Salir</button>
+        -->
       </div>
 
       <!-- Sección: Alerta -->
-      <div class="alert alert-critical">
+      <div id="alerta-seccion" class="alert alert-critical">
         <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
@@ -58,7 +56,7 @@
       </div>
 
       <!-- Sección: Cards -->
-      <div class="stats-grid">
+      <div id="card-seccion" class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Anemia crónica</div>
           <div class="stat-value">🔴</div>
@@ -87,7 +85,7 @@
               <line x1="18" y1="20" x2="18" y2="4"></line>
               <line x1="6" y1="20" x2="6" y2="16"></line>
             </svg>
-            Resumen
+            Iniciar sesión
           </button>
           <button class="tab-trigger active" data-tab="mapa">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -108,9 +106,8 @@
         </div>
 
         <div class="tab-content" data-content="resumen">
-          <div class="tab-panel">
-            <h3>Resumen de datos</h3>
-
+          <div class="tab-panel" id="resumen-panel">
+            <h3></h3>
           </div>
         </div>
 
@@ -207,13 +204,14 @@
     main();
   </script>
 
-
+  <!-- Inicio
   <script>
     document.getElementById("btn-logout").addEventListener("click", () => {
       localStorage.removeItem("logged");
       window.location.href = `${location.origin}/login.html`;
     });
   </script>
+  -->
 
 </body>
 

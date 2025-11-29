@@ -47,7 +47,7 @@ body {
    ======================= */
 
 /* Contenedor del mapa (lado derecho) */
-#sigma-container {
+#sigma-container2 {
   position: fixed;
   top: 1%;
   left: var(--sidebar-width);
@@ -59,6 +59,21 @@ body {
 
 
 }
+
+#sigma-container {
+  position: fixed;
+  top: 2%;
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  height: 60vh; /* Alto controlado */
+  background: rgb(222, 226, 220);
+  border-radius: 16px;
+  z-index: 10;
+  padding: 8px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
 
 
 .datos-container {
@@ -94,7 +109,7 @@ body {
   align-items: center;
 }
 
-#pacient-info-container {
+#pacient-info-container2 {
   position: fixed;
   top: 85%;
   left: var(--sidebar-width);
@@ -107,6 +122,21 @@ body {
 
   /* Centramos horizontalmente */
 
+}
+
+
+#pacient-info-container {
+  position: fixed;
+  top: calc(2% + 60vh + 20px); /* Siempre debajo del mapa */
+  left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  height: 32vh;
+  background: rgb(222, 226, 220);
+  border-radius: 16px;
+  z-index: 9;
+  padding: 8px;
+  transition: all 0.3s ease;
+  overflow-y: auto;
 }
 
 /* Panel lateral principal */

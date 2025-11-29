@@ -21,6 +21,10 @@ export default function main() {
   const pacienteInfoContainer = document.getElementById("pacient-info-container");
   const datosContainer = document.getElementById("datos-container");
   const resumenContainer = document.getElementById("resumen-container");
+  const alertaSeccion = document.getElementById("alerta-seccion");
+  const cardSeccion = document.getElementById("card-seccion");
+
+
 
   // Localizador de bloque de controles del mapa
   const mapControls =
@@ -70,6 +74,9 @@ export default function main() {
 
       datosContainer.style.display = "none";
 
+      alertaSeccion.style.display = "block";
+      cardSeccion.style.display = "block";
+
       // Muestra los controles solo si existen
       if (mapControls) mapControls.style.display = "flex";
 
@@ -117,9 +124,14 @@ export default function main() {
       sigmaContainer.style.display = "none";
       pacienteInfoContainer.style.display = "none";
       datosContainer.style.display = "none";
+      alertaSeccion.style.display = "none";
+      cardSeccion.style.display = "none";
+
       resumenContainer.style.display = "block";
 
-      displayResumenFromBackend();
+
+      //displayResumenFromBackend();
+      loginUser();
 
     }
     // Si la pestaña es "resumen" u otra, se oculta y limpia el contenedor
@@ -222,6 +234,212 @@ export default function main() {
       // Informa cualquier error en la carga o renderizado de Sigma
       console.error("[mainPro] Error al cargar/renderizar Sigma:", err);
     }
+  }
+
+
+  // ------------------------------------------------------------------------
+  // Función login en el app
+  // ------------------------------------------------------------------------
+
+  function loginUser() {
+    const container = document.getElementById("resumen-container");
+    if (!container) return;
+
+    // ==============================
+    // Estilos desde JS
+    // ==============================
+    if (!document.getElementById("login-style-injected")) {
+      const style = document.createElement("style");
+      style.id = "login-style-injected";
+      style.textContent = `
+
+      .login-card {
+        width: 100%;
+        max-width: 950px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 40px 32px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      .logo-icon {
+        width: 64px;
+        height: 64px;
+        background: #0d9488;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(13,148,136,0.25);
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .form-group label {
+        font-size: 14px;
+        color: #1a1a1a;
+      }
+
+      .input-wrapper {
+        position: relative;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+      }
+
+      .input-wrapper input {
+        width: 100%;
+        padding: 12px 14px 12px 42px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        font-size: 14px;
+        transition: 0.2s;
+      }
+
+      .input-wrapper input:focus {
+        background: white;
+        border-color: #0d9488;
+        box-shadow: 0 0 0 3px rgba(13,148,136,0.2);
+        outline: none;
+      }
+
+      .login-button {
+        width: 100%;
+        padding: 14px;
+        background: #0d9488;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      .login-button:hover {
+        background: #0f766e;
+        box-shadow: 0 4px 12px rgba(13,148,136,0.25);
+      }
+
+      .login-button:active {
+        transform: scale(0.98);
+      }
+
+      .login-msg {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+    `;
+      document.head.appendChild(style);
+    }
+
+    // ==============================
+    // Insertar HTML del formulario
+    // ==============================
+    container.innerHTML = `
+    <div class="login-card">
+
+      <div class="login-header">
+        <div class="logo-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+            2 5.42 4.42 3 7.5 3c1.74 0 3.41 1.01 
+            4.5 2.09C13.09 4.01 14.76 3 16.5 3 
+            19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 
+            11.54L12 21.35z"/>
+          </svg>
+        </div>
+        <h2 style="font-size:26px;font-weight:500;color:#1a1a1a;">ChildCareMap</h2>
+        <p style="color:#6b7280;font-size:14px;">Acceso al panel de control</p>
+      </div>
+
+      <form class="login-form">
+
+        <div class="form-group">
+          <label>Correo</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 7-10 7L2 7" />
+            </svg>
+            <input id="email" type="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <input id="password" type="password" placeholder="••••••••">
+          </div>
+        </div>
+
+        <button id="btn-login" type="button" class="login-button">
+          Ingresar
+        </button>
+
+        <div id="login-msg" class="login-msg"></div>
+
+      </form>
+
+    </div>
+  `;
+
+    // ==============================
+    // Lógica del botón LOGIN
+    // ==============================
+    const btn = document.getElementById("btn-login");
+    const msg = document.getElementById("login-msg");
+
+    btn.addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        msg.textContent = "Complete ambos campos.";
+        msg.style.color = "#d00";
+        return;
+      }
+
+      msg.textContent = "Acceso concedido. Cargando mapa...";
+      msg.style.color = "#0a8f55";
+
+      localStorage.setItem("logged", "yes");
+      localStorage.setItem("email", email);
+
+      setTimeout(() => {
+        activateTab("mapa");
+      }, 500);
+    });
   }
 
   // ----------------------------------------------------------------------------------
@@ -672,7 +890,7 @@ async function drawMSTLinesPre(map, km, cantidad_Grupo, gravedad) {
     //const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
     //const url = `http://127.0.0.1:8000/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
     //const url = `http://127.0.0.1:8000/api/mst_clusters_plusPro?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plusPro?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plusPro?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
 
     const res = await fetch(url);
@@ -728,7 +946,7 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
   try {
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
     const res = await fetch(url);
     const data = await res.json();
@@ -784,12 +1002,12 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
     if (destino === null) {
       // urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
-      urlPath = `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
 
     }
     else {
       //urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
-      urlPath = `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
 
     }
 
@@ -798,7 +1016,11 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
     const resPath = await fetch(urlPath);
     const pathData = await resPath.json();
 
+
+
+
     console.log("BELL-FORD ROUTE:", pathData);
+
 
     if (pathData.error) {
       alert("No existe ruta entre origen y destino.");
@@ -942,7 +1164,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     // 2. Solicitar MST + conexiones extra
     // =========================================================
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
 
     const res = await fetch(url);
@@ -1010,10 +1232,10 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
       urlPath =
-        `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
-        
+
 
 
     } else {
@@ -1023,9 +1245,9 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
       urlPath =
-        `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
-        
+
     }
 
     console.log("URL Bellman:", urlPath);
@@ -1038,6 +1260,8 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     const pathData = await resPath.json();
 
     console.log("Bellman-Ford:", pathData);
+
+    displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino);
 
     if (pathData.error) {
       alert("No existe ruta entre origen y destino");
@@ -1188,7 +1412,6 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
 // Función nueva: Mostrar datos desde /api/pacientes
 // ------------------------------------------------------------------------
 
-
 async function displayTableFromBackend() {
   const container = document.getElementById("datos-container");
 
@@ -1306,6 +1529,9 @@ async function displayResumenFromBackendPre() {
   container.innerHTML = html;
 }
 
+
+
+
 // ------------------------------------------------------------------------
 // Función nueva: Mostrar resumen desde /api/pacientes
 // ------------------------------------------------------------------------
@@ -1405,6 +1631,8 @@ async function displayResumenFromBackend() {
   `;
 }
 
+
+
 // ------------------------------------------------------------------------
 // Función nueva: Dibujar aristas EXTRA
 // ------------------------------------------------------------------------
@@ -1423,4 +1651,152 @@ function drawExtraEdges(map, extraEdges) {
       .addTo(map)
       .bindTooltip(`Extra: ${edge.distance_km} km`);
   });
+}
+
+// ------------------------------------------------------------------------
+// FUNCIÓN: Mostrar resultados de Bellman-Ford en tabla
+// ------------------------------------------------------------------------
+async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+
+  const container = document.getElementById("pacient-info-container");
+
+  if (!container) {
+    console.error("No existe el contenedor #pacient-info-container");
+    return;
+  }
+
+  container.innerHTML = `<div class="table-loading">Cargando resultados...</div>`;
+
+  // Construir URL igual que en drawMSTLines()
+  let urlPath;
+
+  const destinoInvalido =
+    nodoDestino === null ||
+    nodoDestino === "" ||
+    nodoDestino === 0 ||
+    isNaN(nodoDestino);
+
+  if (destinoInvalido) {
+    urlPath =
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?` +
+      `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+  } else {
+    urlPath =
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?` +
+      `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+  }
+
+  console.log("📡 Cargando datos Bellman-Ford:", urlPath);
+
+  const response = await fetch(urlPath);
+  const result = await response.json();
+
+  if (result.error) {
+    container.innerHTML = `
+      <div class="table-error">No existe ruta entre origen y destino.</div>
+    `;
+    return;
+  }
+
+  // ============================================================
+  // MODO A: origen → destino
+  // ============================================================
+  if (result.modo === "origen_destino") {
+
+    let html = `
+      <h3>Ruta óptima Origen → Destino</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Paso</th>
+            <th>Nodo</th>
+            <th>Tipo Arista</th>
+            <th>Distancia (km)</th>
+            <th>Peso sanitario</th>
+            <th>Accesibilidad</th>
+            <th>Riesgo</th>
+            <th>Bonif. SERUMS</th>
+            <th>Puntaje SERUMS</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    result.aristas.forEach((edge, index) => {
+      html += `
+        <tr>
+          <td>${index}</td>
+          <td>${result.ruta[index]}</td>
+          <td>${edge.type}</td>
+          <td>${edge.distance_km.toFixed(2)}</td>
+          <td>${edge.peso_sanitario.toFixed(2)}</td>
+          <td>${edge.sanitario.accesibilidad}</td>
+          <td>${edge.sanitario.riesgo}</td>
+          <td>${edge.sanitario.bonificacion_serums}</td>
+          <td>${edge.sanitario.puntaje_serums}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+        </tbody>
+      </table>
+    `;
+
+    container.innerHTML = html;
+    return;
+  }
+
+  // ============================================================
+  // MODO B: top_rutas — múltiples rutas
+  // ============================================================
+  if (result.modo === "top_rutas") {
+
+    let html = `<h3>Top rutas recomendadas</h3>`;
+
+    result.mejores_rutas.forEach((rutaObj, idx) => {
+      html += `
+        <h4>Ruta #${idx + 1}</h4>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Paso</th>
+              <th>Nodo</th>
+              <th>Tipo Arista</th>
+              <th>Distancia (km)</th>
+              <th>Peso sanitario</th>
+              <th>Accesibilidad</th>
+              <th>Riesgo</th>
+              <th>Bonif. SERUMS</th>
+              <th>Puntaje SERUMS</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      rutaObj.aristas.forEach((edge, step) => {
+        html += `
+          <tr>
+            <td>${step}</td>
+            <td>${rutaObj.ruta[step]}</td>
+            <td>${edge.type}</td>
+            <td>${edge.distance_km.toFixed(2)}</td>
+            <td>${edge.peso_sanitario.toFixed(2)}</td>
+            <td>${edge.sanitario.accesibilidad}</td>
+            <td>${edge.sanitario.riesgo}</td>
+            <td>${edge.sanitario.bonificacion_serums}</td>
+            <td>${edge.sanitario.puntaje_serums}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+        <br>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
 }
