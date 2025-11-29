@@ -16,8 +16,7 @@
       const logged = localStorage.getItem("logged");
 
       if (logged !== "yes") {
-        window.location.href = "/webSupport/login.html";
-        return;
+        window.location.href = `${location.origin}/webSupport/login.html`;
       }
     });
   </script>
@@ -208,12 +207,11 @@
 
   <script>
     document.getElementById("btn-logout").addEventListener("click", () => {
-      // Cerrar sesión
       localStorage.removeItem("logged");
-      // Redirigir al login
-      window.location.href = "./webSupport/login.html";
+      window.location.href = `${location.origin}/webSupport/login.html`;
     });
   </script>
+  
 </body>
 
 </html>
