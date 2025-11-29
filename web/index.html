@@ -10,14 +10,17 @@
 </head>
 
 <body>
-  
-   <!--
+
   <script>
-    if (localStorage.getItem("logged") !== "yes") {
-      window.location.replace("/webBackUps/login.html");
-    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const logged = localStorage.getItem("logged");
+
+      if (logged !== "yes") {
+        window.location.href = "/webSupport/login.html";
+        return;
+      }
+    });
   </script>
-  -->
 
   <div class="dashboard-panel">
     <div class="dashboard-container">
@@ -34,6 +37,7 @@
           <h1>ChildCareMap</h1>
           <p>Sistema de mapeo de anemia</p>
         </div>
+        <button id="btn-logout" class="logout-button">Salir</button>
       </div>
 
       <!-- Sección: Alerta -->
@@ -114,19 +118,19 @@
             <p>Análisis geográfico de anemia infantil en el Perú</p>
 
             <!-- Inicio - Entrada de radio de búsqueda -->
-            <div id="ufd-controls" class="control-box">
+            <div class="ufd-controls control-box">
               <label for="input-km" class="control-label">
                 Radio de búsqueda (km):
               </label>
-              <input type="number" id="input-km" name="radio_km" min="1" max="100" value="100" class="control-input">
+              <input type="number" id="input-km" name="radio_km" min="1" max="100" value="50" class="control-input">
             </div>
             <!-- Fin - Entrada de radio de búsqueda -->
             <!-- Inicio - Entrada de pacientes por grupo -->
-            <div id="ufd-controls" class="control-box">
+            <div class="ufd-controls control-box">
               <label for="input-cantidad-grupo" class="control-label">
                 Pacientes por grupo:
               </label>
-              <input type="number" id="input-cantidad-grupo" name="cantidad_grupo" min="1" max="50" value="2"
+              <input type="number" id="input-cantidad-grupo" name="cantidad_grupo" min="1" max="50" value="1"
                 class="control-input">
             </div>
             <!-- Fin - Entrada de pacientes por grupo -->
@@ -136,17 +140,40 @@
                 Prioridad por gravedad:
               </label>
               <select id="select-gravedad" class="control-select">
-                <option value="none" selected>Sin prioridad</option>
+                <option value="none">Sin prioridad</option>
                 <option value="alta">Alta prioridad (Grave)</option>
                 <option value="media">Media (Moderada)</option>
-                <option value="baja">Baja (Leve)</option>
+                <option value="baja" selected>Baja (Leve)</option>
               </select>
             </div>
             <!-- Fin - Entrada de gravedad -->
+            <!-- Inicio - Nodo origen -->
+            <div class="ufd-controls control-box">
+              <label for="input-nodo-origen" class="control-label">
+                Nodo origen:
+              </label>
+              <input type="number" id="input-nodo-origen" name="nodo_origen" min="1" max="50" value="5"
+                class="control-input">
+            </div>
+            <!-- Fin - Nodo origen -->
+            <!-- Inicio - Nodo destino -->
+            <div class="ufd-controls control-box">
+              <label for="input-nodo-destino" class="control-label">
+                Nodo destino:
+              </label>
+              <input type="number" id="input-nodo-destino" name="nodo_destino" min="0" max="50" class="control-input">
+            </div>
+            <!-- Fin - Nodo destino -->
             <div>
               <br>
               <button id="btn-ejecutar-ufd" class="control-button">
                 Calcular
+              </button>
+            </div>
+            <div>
+              <br>
+              <button id="btn-ejecutar-bf" class="control-button">
+                Calcular Bellman-Ford
               </button>
             </div>
 
@@ -178,6 +205,15 @@
     main();
   </script>
 
+
+  <script>
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      // Cerrar sesión
+      localStorage.removeItem("logged");
+      // Redirigir al login
+      window.location.href = "./webSupport/login.html";
+    });
+  </script>
 </body>
 
 </html>

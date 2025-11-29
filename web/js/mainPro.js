@@ -84,7 +84,7 @@ export default function main() {
         if (modoCluster) {
           const kmInput = document.getElementById("input-km");
           const km = Number(kmInput?.value || 10);
-          await loadCluster(km, cantidadCluster, gravedad);
+          await loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestino);
         } else {
           await loadSigma();
         }
@@ -370,6 +370,7 @@ export default function main() {
   // Capturar evento desde el botón y demás parámetros de entrada
   // ======================================================================
   const btnEjecutarUFD = document.getElementById("btn-ejecutar-ufd");
+  const btnEjecutarBF = document.getElementById("btn-ejecutar-bf");
 
   if (btnEjecutarUFD) {
     btnEjecutarUFD.addEventListener("click", () => {
@@ -382,12 +383,57 @@ export default function main() {
       const gravedad = document.getElementById("select-gravedad");
       const gravedadAnemia = (gravedad?.value);
 
+      const origen = document.getElementById("input-nodo-origen");
+      const nodoOrigen = Number(origen?.value || 5);
 
-      modoCluster = true;   // <- ACTIVAS MODO CLUSTER
+
+      //const destino = document.getElementById("input-nodo-destino");
+      //const nodoDestino = Number(destino?.value);
+
+      const destinoInput = document.getElementById("input-nodo-destino");
+      const nodoDestino = destinoInput && destinoInput.value !== ""
+        ? Number(destinoInput.value)
+        : null;
+
+
+      modoCluster = true;
 
       console.log("🔵 Ejecutando UFD con radio:", km, "km");
 
-      loadCluster(km, cantidadCluster, gravedadAnemia);
+      loadCluster(km, cantidadCluster, gravedadAnemia, nodoOrigen, nodoDestino);
+    });
+  }
+
+  if (btnEjecutarBF) {
+    btnEjecutarBF.addEventListener("click", () => {
+
+      const kmInput = document.getElementById("input-km");
+      const km = Number(kmInput?.value || 10);
+
+      const cantidadGrupo = document.getElementById("input-cantidad-grupo");
+      const cantidadCluster = Number(cantidadGrupo?.value || 10);
+
+      const gravedad = document.getElementById("select-gravedad");
+      const gravedadAnemia = (gravedad?.value);
+
+      const origen = document.getElementById("input-nodo-origen");
+      const nodoOrigen = Number(origen?.value || 5);
+
+
+      //const destino = document.getElementById("input-nodo-destino");
+      //const nodoDestino = Number(destino?.value);
+
+      const destinoInput = document.getElementById("input-nodo-destino");
+      const nodoDestino = destinoInput && destinoInput.value !== ""
+        ? Number(destinoInput.value)
+        : null;
+
+
+      modoCluster = true;
+
+      console.log("🔵 Ejecutando UFD con radio:", km, "km");
+
+      loadCluster(km, cantidadCluster, gravedadAnemia, nodoOrigen, nodoDestino);
     });
   }
 
@@ -523,7 +569,7 @@ function anemiaToColorByGravity(value) {
 // Función: Cargar grupos desde /api/union_find_clusters
 // ------------------------------------------------------------------------
 
-async function loadCluster(km, cantidadCluster, gravedad) {
+async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestino) {
   try {
     // Leer radio desde el input #radioKm (si existe)
     //let km = 10;
@@ -606,7 +652,7 @@ async function loadCluster(km, cantidadCluster, gravedad) {
         `);
     });
 
-    await drawMSTLines(map, km, cantidadCluster, gravedad);
+    await drawMSTLines(map, km, cantidadCluster, gravedad, nodoOrigen, nodoDestino);
 
 
     window._mapInstance = map;
@@ -621,10 +667,14 @@ async function loadCluster(km, cantidadCluster, gravedad) {
 // ------------------------------------------------------------------------
 // Función nueva: Dibujar las líneas de conexión del MST 9.1
 // ------------------------------------------------------------------------
-async function drawMSTLines(map, km, cantidad_Grupo, gravedad) {
+async function drawMSTLinesPre(map, km, cantidad_Grupo, gravedad) {
   try {
-    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
+    //const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
     //const url = `http://127.0.0.1:8000/api/mst_clusters?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}`;
+    //const url = `http://127.0.0.1:8000/api/mst_clusters_plusPro?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plusPro?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+
+
     const res = await fetch(url);
     const data = await res.json();
 
@@ -648,10 +698,491 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad) {
         .bindTooltip(`${edge.distance_km} km`, { permanent: false });
     });
 
+
+    if (data.extra_edges) {
+      data.extra_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([A, B], {
+          color: "#457b9d", // azul
+          weight: 2,
+          opacity: 0.7,
+          dashArray: "4, 4"
+        })
+          .addTo(map)
+          .bindTooltip(`Extra: ${edge.distance_km} km`);
+      });
+    }
+
   } catch (err) {
     console.error("Error al dibujar MST:", err);
   }
 }
+
+
+// ---------------------------------------------------------------------------
+// Función nueva: Dibujar las líneas de conexión del MST 9.1 (ültima s)
+// ---------------------------------------------------------------------------
+async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+
+  try {
+    // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("RAW DATA:", data);
+
+    // -------------------------------
+    // Dibujar grafo con MST
+    // -------------------------------
+    if (Array.isArray(data.mst_edges)) {
+      data.mst_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [parseFloat(A[0]), parseFloat(A[1])],
+          [parseFloat(B[0]), parseFloat(B[1])]
+        ], {
+          color: "#e63946",
+          weight: 3,
+          opacity: 0.9
+        }).addTo(map);
+      });
+    }
+
+    // ---------------------------------------------
+    // Dibujar lineas de conexión adicionales al MST
+    // ---------------------------------------------
+    if (Array.isArray(data.extra_edges)) {
+      data.extra_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [parseFloat(A[0]), parseFloat(A[1])],
+          [parseFloat(B[0]), parseFloat(B[1])]
+        ], {
+          color: "#457b9d",
+          weight: 2,
+          opacity: 0.8,
+          dashArray: "6, 6"
+        }).addTo(map);
+      });
+    }
+
+
+    // ---------------------------------------------
+    // Dibujar resultado de Bellmann-Ford
+    // ---------------------------------------------
+    let urlPath = "";
+    const origen = nodoOrigen;
+    const destino = nodoDestino;
+
+    if (destino === null) {
+      // urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
+      urlPath = `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
+
+    }
+    else {
+      //urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
+      urlPath = `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
+
+    }
+
+
+
+    const resPath = await fetch(urlPath);
+    const pathData = await resPath.json();
+
+    console.log("BELL-FORD ROUTE:", pathData);
+
+    if (pathData.error) {
+      alert("No existe ruta entre origen y destino.");
+      return;
+    }
+
+    // Limpiar rutas viejas
+    if (window.routeLayer) window.routeLayer.clearLayers();
+    else window.routeLayer = L.layerGroup().addTo(map);
+
+    // ---------------------------------------------------------------------
+    // Escenario 1: origen_destino
+    // ---------------------------------------------------------------------
+    if (pathData.modo === "origen_destino") {
+
+      pathData.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([[A[0], A[1]], [B[0], B[1]]], {
+          color: "#2ecc71",
+          weight: 5,
+          opacity: 1
+        }).addTo(window.routeLayer);
+      });
+
+      pathData.ruta.forEach((nodeId, i) => {
+        const edge = pathData.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+        if (!edge) return;
+
+        const point =
+          edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 8,
+          color: "#2ecc71",
+          fillColor: "#27ae60",
+          fillOpacity: 11
+        })
+          .bindTooltip(`Paso ${i}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+    }
+
+    // ---------------------------------------------------------------------
+    // Escenario 2: top_rutas 
+    // ---------------------------------------------------------------------
+    if (pathData.modo === "top_rutas") {
+
+      const routeColors = [
+        "#e63946",
+        "#457b9d",
+        "#2a9d8f",
+        "#f4a261",
+        "#8d5a97",
+        "#1d3557"
+      ];
+
+      pathData.mejores_rutas.forEach((rutaObj, idx) => {
+
+        const color = routeColors[idx % routeColors.length];
+
+        // -------------------------------
+        // Dibujar aristas de esta ruta
+        // -------------------------------
+        rutaObj.aristas.forEach(edge => {
+          const A = edge.centroid_a;
+          const B = edge.centroid_b;
+
+          L.polyline(
+            [
+              [A[0], A[1]],
+              [B[0], B[1]]
+            ],
+            {
+              color: color,
+              weight: 25,
+              opacity: 0.75
+            }
+          ).addTo(window.routeLayer);
+
+
+
+
+        });
+
+        // -------------------------------
+        // Dibujar nodos de esta ruta
+        // -------------------------------
+        rutaObj.ruta.forEach((nodeId, step) => {
+          const edge = rutaObj.aristas.find(
+            e => e.cluster_a === nodeId || e.cluster_b === nodeId
+          );
+          if (!edge) return;
+
+          const point =
+            edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+          L.circleMarker([point[0], point[1]], {
+            radius: 7,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.9
+
+          })
+            .bindTooltip(
+              `Ruta ${idx + 1}<br>Paso ${step}<br>Nodo ${nodeId}`
+            )
+            .addTo(window.routeLayer);
+        });
+      });
+    }
+
+
+
+  } catch (err) {
+    console.error("Error al dibujar MST:", err);
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Función nueva: Dibujar las líneas de conexión del MST 9.1 (ültima versión con clear)
+// ---------------------------------------------------------------------------
+async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+
+  try {
+    // =========================================================
+    // 1. Crear capas globales si no existen
+    // =========================================================
+    if (!window.graphLayer) window.graphLayer = L.layerGroup().addTo(map);   // MST + extra_edges
+    if (!window.routeLayer) window.routeLayer = L.layerGroup().addTo(map);   // Rutas Bellman
+
+    // Crear capas nuevas siembre ANTES de dibujar
+    window.graphLayer = L.layerGroup().addTo(map);
+    window.routeLayer = L.layerGroup().addTo(map);
+
+    // =========================================================
+    // 2. Solicitar MST + conexiones extra
+    // =========================================================
+    // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `http://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("MST DATA:", data);
+
+
+    // =========================================================
+    // 3. Dibujar MST (rojo)
+    // =========================================================
+    if (Array.isArray(data.mst_edges)) {
+      data.mst_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: "#e63946",
+          weight: 3,
+          opacity: 0.9
+        }).addTo(window.graphLayer);
+      });
+    }
+
+
+    // =========================================================
+    // 4. Dibujar extra_edges (azul)
+    // =========================================================
+    if (Array.isArray(data.extra_edges)) {
+      data.extra_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: "#457b9d",
+          weight: 2,
+          opacity: 0.8,
+          dashArray: "6, 6"
+        }).addTo(window.graphLayer);
+      });
+    }
+
+
+    // =========================================================
+    // 5. Construir URL de Bellman-Ford
+    // =========================================================
+    let urlPath;
+
+    const destinoInvalido =
+      nodoDestino === null ||
+      nodoDestino === "" ||
+      nodoDestino === 0 ||
+      isNaN(nodoDestino);
+
+    if (nodoDestino === null || nodoDestino === "" || isNaN(nodoDestino)) {
+      // Sin destino → top_rutas
+      //urlPath =
+      //  `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+      //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+
+      urlPath =
+        `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+
+        
+
+
+    } else {
+      // Con destino → ruta origen-destino
+      //urlPath =
+      //  `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+      //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+
+      urlPath =
+        `http://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+        
+    }
+
+    console.log("URL Bellman:", urlPath);
+
+
+    // =========================================================
+    // 6. Ejecutar Bellman-Ford
+    // =========================================================
+    const resPath = await fetch(urlPath);
+    const pathData = await resPath.json();
+
+    console.log("Bellman-Ford:", pathData);
+
+    if (pathData.error) {
+      alert("No existe ruta entre origen y destino");
+      return;
+    }
+
+    // =========================================================
+    // 7. Escenario A — modo origen_destino
+    // =========================================================
+    if (pathData.modo === "origen_destino") {
+
+      // Dibujar aristas de la ruta (verde)
+      pathData.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        // Crear polyline y GUARDARLA en una variable
+        const poly = L.polyline(
+          [[A[0], A[1]], [B[0], B[1]]],
+          {
+            color: "#2ecc71",
+            weight: 6,
+            opacity: 1.0
+          }
+        ).addTo(window.routeLayer);
+
+        // ------------------------------
+        // Tooltip con todos los detalles
+        // ------------------------------
+        poly.bindTooltip(`
+          <b>Detalle de ruta</b><br>
+          <b>Tipo:</b> ${edge.type}<br>
+          <b>Distancia:</b> ${edge.distance_km.toFixed(2)} km<br>
+          <b>Peso sanitario:</b> ${edge.peso_sanitario.toFixed(2)}<br>
+          <b>Accesibilidad:</b> ${edge.sanitario.accesibilidad}<br>
+          <b>Riesgo:</b> ${edge.sanitario.riesgo}<br>
+          <b>Bonificación SERUMS:</b> ${edge.sanitario.bonificacion_serums}<br>
+          <b>Puntaje SERUMS:</b> ${edge.sanitario.puntaje_serums}
+        `);
+
+      });
+
+      // Dibujar nodos
+      pathData.ruta.forEach((nodeId, stepIndex) => {
+
+        const edge = pathData.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+
+        if (!edge) return;
+
+        const point =
+          edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 9,
+          color: "#2ecc71",
+          fillColor: "#27ae60",
+          fillOpacity: 1
+        })
+          .bindTooltip(`Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+
+      return; // FIN escenario A
+    }
+
+
+    // =========================================================
+    // 8. Escenario B — modo top_rutas
+    // =========================================================
+
+    const routeColors = [
+      "#e63946",
+      "#457b9d",
+      "#2a9d8f",
+      "#f4a261",
+      "#8d5a97",
+      "#1d3557"
+    ];
+
+    pathData.mejores_rutas.forEach((rutaObj, idx) => {
+      const color = routeColors[idx % routeColors.length];
+
+      // Aristas de cada ruta
+      rutaObj.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+
+
+
+
+        const poly = L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: color, // verde para origen-destino o el color dinámico
+          weight: 6,
+          opacity: 1
+        }).addTo(window.routeLayer);
+
+        poly.bindTooltip(`
+        <b>Detalle de ruta</b><br>
+        <b>Tipo:</b> ${edge.type}<br>
+        <b>Peso sanitario:</b> ${edge.peso_sanitario.toFixed(2)}<br>
+        <b>Distancia (+):</b> ${edge.distance_km.toFixed(2)} km<br>
+        <b>Accesibilidad (+):</b> ${edge.sanitario.accesibilidad}<br>
+        <b>Riesgo (+):</b> ${edge.sanitario.riesgo}<br>
+        <b>Bonificación (-):</b> ${edge.sanitario.bonificacion_serums}<br>
+        <b>Puntaje SERUMS (-):</b> ${edge.sanitario.puntaje_serums}
+      `);
+
+
+
+      });
+
+      // Nodos de cada ruta
+      rutaObj.ruta.forEach((nodeId, stepIndex) => {
+        const edge = rutaObj.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+        if (!edge) return;
+
+        const point =
+          edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 8,
+          color: color,
+          fillColor: color,
+          fillOpacity: 1
+        })
+          .bindTooltip(`Ruta ${idx + 1}<br>Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+    });
+
+
+  } catch (err) {
+    console.error("Error en drawMSTLines:", err);
+  }
+}
+
+
 
 // ------------------------------------------------------------------------
 // Función nueva: Mostrar datos desde /api/pacientes
@@ -872,4 +1403,24 @@ async function displayResumenFromBackend() {
 
     </div>
   `;
+}
+
+// ------------------------------------------------------------------------
+// Función nueva: Dibujar aristas EXTRA
+// ------------------------------------------------------------------------
+
+function drawExtraEdges(map, extraEdges) {
+  extraEdges.forEach(edge => {
+    const A = edge.centroid_a;
+    const B = edge.centroid_b;
+
+    L.polyline([A, B], {
+      color: "#457b9d",   // otro color para diferenciar
+      weight: 2,
+      dashArray: "6, 6", // líneas punteadas
+      opacity: 0.7,
+    })
+      .addTo(map)
+      .bindTooltip(`Extra: ${edge.distance_km} km`);
+  });
 }

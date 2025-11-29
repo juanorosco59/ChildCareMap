@@ -520,6 +520,23 @@ body {
 
 }
 
+/* Botones de acción */
+.logout-button {
+  padding: 6px 20px;
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  align-content: right;
+}
+
+.logout-button:hover {
+  background-color: #377150;
+
+}
+
 
 /* Contenedor general */
 .table-container {

@@ -79,16 +79,8 @@
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      console.log('Intento de inicio de sesión:', { email, password });
-
-      // Guarda la sesión
       localStorage.setItem("logged", "yes");
-      
-      // Vuelve al index principal
-      window.location.href = "/index.html";
+      window.location.href = "../index.html";
     });
   </script>
 
