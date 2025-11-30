@@ -1,4 +1,5 @@
 # Importa la clase principal de FastAPI
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
@@ -13,6 +14,7 @@ from math import sqrt
 
 
 # Crea una instancia de la aplicación
+
 app = FastAPI(title="ChildCareMap Backend")
 
 # Configura el middleware de CORS
@@ -63,7 +65,7 @@ def get_connection():
     )
 
 
-# Función opcional para color según anemia
+# Función para color según anemia
 def anemia_to_color(value: float):
     if value < 10:
         return "#ef4444"  # Rojo — crítico
@@ -210,7 +212,7 @@ def get_union_find_clusters(R_km: float, gravedad: str):
 # -----------------------------------------
 # Función pre-cargar zona_info
 # -----------------------------------------
-# Variables globales (lazy load)
+
 ZONA_POLYGONS = None      # lista de polígonos [ [(lon,lat), (lon,lat), ...], ... ]
 ZONA_DATA = None          # datos sanitarios alineados
 ZONA_CENTROIDS = None     # centroides para búsqueda rápida
@@ -303,6 +305,7 @@ def preload_zonas():
 # -----------------------------------------
 # API: Zonas cargadas
 # -----------------------------------------
+
 @app.get("/api/zonas")
 def api_zonas():
     preload_zonas()
@@ -1232,8 +1235,5 @@ def bellman_paths_V1(R_km: float,
         "mejores_rutas": rutas
     }
 
-
-
-#Notas
 
 

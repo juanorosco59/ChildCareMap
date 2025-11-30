@@ -65,7 +65,8 @@ body {
   top: 2%;
   left: var(--sidebar-width);
   width: calc(100vw - var(--sidebar-width));
-  height: 60vh; /* Alto controlado */
+  height: 60vh;
+  /* Alto controlado */
   background: rgb(222, 226, 220);
   border-radius: 16px;
   z-index: 10;
@@ -127,7 +128,8 @@ body {
 
 #pacient-info-container {
   position: fixed;
-  top: calc(2% + 60vh + 20px); /* Siempre debajo del mapa */
+  top: calc(2% + 60vh + 20px);
+  /* Siempre debajo del mapa */
   left: var(--sidebar-width);
   width: calc(100vw - var(--sidebar-width));
   height: 32vh;
@@ -245,7 +247,7 @@ body {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 16px;
+  padding: 8px;
   text-align: center;
   box-shadow: var(--shadow);
 }
@@ -258,15 +260,14 @@ body {
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--muted);
   margin-bottom: 8px;
-  text-transform: uppercase;
   letter-spacing: .025em;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
 }
@@ -738,4 +739,8 @@ body {
   font-size: 15px;
   color: #1e293b;
   margin-left: 8px;
+}
+
+#btn-ejecutar-bf {
+  display: none !important;
 }

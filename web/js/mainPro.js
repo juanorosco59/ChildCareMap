@@ -1,8 +1,6 @@
-// Importa Graphology para manejar el grafo en memoria
+// Importa Graphology y Sigma
 import Graph from "graphology";
 import { parse } from "graphology-gexf/browser";
-
-// Importa Sigma para renderizar el grafo
 import Sigma from "sigma";
 
 // Carga de módulos  para mapas
@@ -32,8 +30,7 @@ export default function main() {
     document.querySelector(".graph-controls") ||
     document.getElementById("map-controls");
 
-  // Mantiene la instancia global de Sigma para controlar su ciclo de vida
-
+  // Mantener la instancia global de Sigma
   let renderer = null;
   let cleanup = null;
   let modoCluster = false;
@@ -696,7 +693,7 @@ async function callAPIBackend(endpoint = "/api/pacientes") {
 }
 
 // ====================================================================
-// Mostrar datos del backend como tabla
+// Función auxiliar: Mostrar datos del backend como tabla
 // ====================================================================
 
 async function displayTableFromBackendPre() {
@@ -883,7 +880,7 @@ async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestin
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Dibujar las líneas de conexión del MST 9.1
+// Función: Dibujar las líneas de conexión del MST (Versión 1.0)
 // ------------------------------------------------------------------------
 async function drawMSTLinesPre(map, km, cantidad_Grupo, gravedad) {
   try {
@@ -940,7 +937,7 @@ async function drawMSTLinesPre(map, km, cantidad_Grupo, gravedad) {
 
 
 // ---------------------------------------------------------------------------
-// Función nueva: Dibujar las líneas de conexión del MST 9.1 (ültima s)
+// Función: Dibujar las líneas de conexión del MST (Versión 2.0)
 // ---------------------------------------------------------------------------
 async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
 
@@ -1145,7 +1142,7 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
 
 // ---------------------------------------------------------------------------
-// Función nueva: Dibujar las líneas de conexión del MST 9.1 (ültima versión con clear)
+// Función: Dibujar las líneas de conexión del MST (Versión 3.0)
 // ---------------------------------------------------------------------------
 async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
 
@@ -1156,7 +1153,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     if (!window.graphLayer) window.graphLayer = L.layerGroup().addTo(map);   // MST + extra_edges
     if (!window.routeLayer) window.routeLayer = L.layerGroup().addTo(map);   // Rutas Bellman
 
-    // Crear capas nuevas siembre ANTES de dibujar
+    // Crear capas nuevas siembre antes de dibujar
     window.graphLayer = L.layerGroup().addTo(map);
     window.routeLayer = L.layerGroup().addTo(map);
 
@@ -1227,7 +1224,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
 
     if (nodoDestino === null || nodoDestino === "" || isNaN(nodoDestino)) {
       // Sin destino → top_rutas
-      //urlPath =
+      //   urlPath =
       //  `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
@@ -1409,7 +1406,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Mostrar datos desde /api/pacientes
+// Función auxiliar: Mostrar datos desde /api/pacientes
 // ------------------------------------------------------------------------
 
 async function displayTableFromBackend() {
@@ -1471,7 +1468,7 @@ async function displayTableFromBackend() {
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Mostrar resumen desde /api/pacientes
+// Función auxiliar: Mostrar resumen desde /api/pacientes
 // ------------------------------------------------------------------------
 
 
@@ -1533,7 +1530,7 @@ async function displayResumenFromBackendPre() {
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Mostrar resumen desde /api/pacientes
+// Función auxiliar: Mostrar resumen desde /api/pacientes
 // ------------------------------------------------------------------------
 
 
@@ -1634,7 +1631,7 @@ async function displayResumenFromBackend() {
 
 
 // ------------------------------------------------------------------------
-// Función nueva: Dibujar aristas EXTRA
+// Función auxiliar: Dibujar aristas EXTRA
 // ------------------------------------------------------------------------
 
 function drawExtraEdges(map, extraEdges) {
@@ -1654,7 +1651,7 @@ function drawExtraEdges(map, extraEdges) {
 }
 
 // ------------------------------------------------------------------------
-// FUNCIÓN: Mostrar resultados de Bellman-Ford en tabla
+// Función auxiliar: Mostrar resultados de Bellman-Ford en tabla
 // ------------------------------------------------------------------------
 async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
 
@@ -1704,19 +1701,19 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
   if (result.modo === "origen_destino") {
 
     let html = `
-      <h3>Ruta óptima Origen → Destino</h3>
+      <h3>Ruta óptima con origen → destino</h3>
       <table class="data-table">
         <thead>
           <tr>
-            <th>Paso</th>
+            <th>Tramo</th>
             <th>Nodo</th>
-            <th>Tipo Arista</th>
-            <th>Distancia (km)</th>
+            <th>Tipo de camino</th>
             <th>Peso sanitario</th>
-            <th>Accesibilidad</th>
-            <th>Riesgo</th>
-            <th>Bonif. SERUMS</th>
-            <th>Puntaje SERUMS</th>
+            <th>Distancia (km) (+)</th>
+            <th>Accesibilidad (+)</th>
+            <th>Riesgo (+)</th>
+            <th>Bonif. SERUMS (-)</th>
+            <th>Puntaje SERUMS (-)</th>
           </tr>
         </thead>
         <tbody>
@@ -1748,27 +1745,28 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
   }
 
   // ============================================================
-  // MODO B: top_rutas — múltiples rutas
+  // MODO B: Top_rutas — múltiples rutas
   // ============================================================
   if (result.modo === "top_rutas") {
 
-    let html = `<h3>Top rutas recomendadas</h3>`;
+    let html = `<h3 style="text-align:left; margin-top:10px;">Mejores rutas recomendadas</h3></br>`;
 
     result.mejores_rutas.forEach((rutaObj, idx) => {
       html += `
-        <h4>Ruta #${idx + 1}</h4>
+        <h4>Ruta ${idx + 1}</h4>
+        </br>
         <table class="data-table">
           <thead>
             <tr>
-              <th>Paso</th>
+              <th>Tramo</th>
               <th>Nodo</th>
-              <th>Tipo Arista</th>
-              <th>Distancia (km)</th>
+              <th>Tipo de camino</th>
               <th>Peso sanitario</th>
-              <th>Accesibilidad</th>
-              <th>Riesgo</th>
-              <th>Bonif. SERUMS</th>
-              <th>Puntaje SERUMS</th>
+              <th>Distancia (km) (+)</th>
+              <th>Accesibilidad (+)</th>
+              <th>Riesgo (+)</th>
+              <th>Bonif. SERUMS (-)</th>
+              <th>Puntaje SERUMS (-)</th>
             </tr>
           </thead>
           <tbody>

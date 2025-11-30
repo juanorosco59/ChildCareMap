@@ -42,12 +42,6 @@
 
       <!-- Sección: Alerta -->
       <div id="alerta-seccion" class="alert alert-critical">
-        <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
         <div class="alert-content">
           <strong>Alerta de riesgo crítico</strong><br>
           Valores de hemoglobina por debajo del límite crítico indican que el paciente corre serio riesgo y necesita
@@ -66,7 +60,7 @@
           <div class="stat-value">🟠</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Anemia Leve</div>
+          <div class="stat-label">Anemia leve</div>
           <div class="stat-value">🟡</div>
         </div>
         <div class="stat-card">
@@ -139,10 +133,10 @@
                 Prioridad por gravedad:
               </label>
               <select id="select-gravedad" class="control-select">
-                <option value="none">Sin prioridad</option>
-                <option value="alta">Alta prioridad (Grave)</option>
-                <option value="media">Media (Moderada)</option>
+                <option value="none">Sin prioridad (Normal)</option>
                 <option value="baja" selected>Baja (Leve)</option>
+                <option value="media">Media (Moderada)</option>
+                <option value="alta">Alta prioridad (Crónica)</option>
               </select>
             </div>
             <!-- Fin - Entrada de gravedad -->
