@@ -1725,8 +1725,8 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
           <td>${index}</td>
           <td>${result.ruta[index]}</td>
           <td>${edge.type}</td>
-          <td>${edge.distance_km.toFixed(2)}</td>
           <td>${edge.peso_sanitario.toFixed(2)}</td>
+          <td>${edge.distance_km.toFixed(2)}</td>
           <td>${edge.sanitario.accesibilidad}</td>
           <td>${edge.sanitario.riesgo}</td>
           <td>${edge.sanitario.bonificacion_serums}</td>
@@ -1778,8 +1778,8 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
             <td>${step}</td>
             <td>${rutaObj.ruta[step]}</td>
             <td>${edge.type}</td>
-            <td>${edge.distance_km.toFixed(2)}</td>
             <td>${edge.peso_sanitario.toFixed(2)}</td>
+            <td>${edge.distance_km.toFixed(2)}</td>
             <td>${edge.sanitario.accesibilidad}</td>
             <td>${edge.sanitario.riesgo}</td>
             <td>${edge.sanitario.bonificacion_serums}</td>

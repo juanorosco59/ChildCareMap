@@ -18,6 +18,7 @@ from math import sqrt
 app = FastAPI(title="ChildCareMap Backend")
 
 # Configura el middleware de CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],         # Permite todas las fuentes (útil para desarrollo)
