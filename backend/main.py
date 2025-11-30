@@ -12,7 +12,6 @@ from math import radians
 import json
 from math import sqrt
 
-
 # Crea una instancia de la aplicación
 
 app = FastAPI(title="ChildCareMap Backend")
