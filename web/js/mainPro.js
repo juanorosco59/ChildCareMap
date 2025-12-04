@@ -1020,7 +1020,7 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
 
     if (pathData.error) {
-      alert("No existe ruta entre origen y destino.");
+      alert("No existe ruta entre origen y destino, elija otra opción.");
       return;
     }
 
@@ -1261,7 +1261,7 @@ async function drawMSTLinesPre3(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
     displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino);
 
     if (pathData.error) {
-      alert("No existe ruta entre origen y destino");
+      alert("No existe ruta entre origen y destino, elija otra opción.");
       return;
     }
 
@@ -1536,7 +1536,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
 
 
     if (pathData.error) {
-      alert("No existe ruta entre origen y destino");
+      alert("No existe ruta entre origen y destino, elija otra opción.");
       return;
     }
 
@@ -1966,7 +1966,7 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
 
   if (result.error) {
     container.innerHTML = `
-      <div class="table-error">No existe ruta entre origen y destino.</div>
+      <div class="table-error">No existe ruta entre origen y destino, elija otra opción.</div>
     `;
     return;
   }
@@ -1977,7 +1977,7 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
   if (result.modo === "ciclo_negativo") {
 
     let html = `
-    <h3 style="color:#ff00ff;">⚠️ Ciclo negativo detectado</h3>
+    <h3 style="color:#ff00ff;">Ciclo negativo detectado</h3>
     <p>Bellman-Ford no puede calcular rutas porque existe un ciclo cuyo peso total es negativo.</p>
 
     <h4>Nodos del ciclo</h4>
