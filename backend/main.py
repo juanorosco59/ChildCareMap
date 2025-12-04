@@ -963,7 +963,7 @@ def mst_clusters_plus_V2(R_km: float, cantidad_Grupo: int, gravedad: str, K: int
 
 
 # -----------------------------------------------------------
-# API: MST Plus con rutas adicionales y zonas precargadas
+# API: MST Plus con rutas adicionales y zonas precargadas 3.0
 # -----------------------------------------------------------
 
 @app.get("/api/mst_clusters_plus_V3")
@@ -1012,6 +1012,9 @@ def mst_clusters_plus_V3(R_km: float, cantidad_Grupo: int, gravedad: str, K: int
 
             d = haversine(lat1, lon1, lat2, lon2)
             Z = zona_cache[j]
+
+
+
 
             peso_sanitario = (
                 d
@@ -1101,6 +1104,201 @@ def mst_clusters_plus_V3(R_km: float, cantidad_Grupo: int, gravedad: str, K: int
         "all_edges": final_edges
     }
 
+
+# -----------------------------------------------------------
+# API: MST Plus con rutas adicionales y zonas precargadas 4.0
+# -----------------------------------------------------------
+@app.get("/api/mst_clusters_plus_V4")
+
+def mst_clusters_plus_V4(R_km: float, cantidad_Grupo: int, gravedad: str, K: int = 3):
+    """
+    Devuelve:
+    - MST entre clusters (usando aristas dirigidas, pero el MST se construye por conectividad)
+    - Conexiones extra KNN
+    - Peso sanitario basado en zona_info (rápido, sin SQL)
+    - Aristas dirigidas desde zonas "peores" → "mejores"
+    """
+
+    # 1. Obtener clusters
+    clusters_data = get_union_find_clusters(R_km, gravedad)
+    clusters = clusters_data.get("clusters", [])
+    clusters = [c for c in clusters if c["size"] >= cantidad_Grupo]
+
+    n = len(clusters)
+    if n == 0:
+        return {
+            "mst_edges": [],
+            "extra_edges": [],
+            "all_edges": [],
+            "message": "No hay clusters",
+        }
+
+    # 2. Centroides
+    coords = [(c["centroid"]["latitud"], c["centroid"]["longitud"])
+              for c in clusters]
+
+    # 3. Cargar zonas UNA SOLA VEZ (si no está cargado)
+    preload_zonas()
+
+    # 4. Obtener datos sanitarios para cada cluster
+    zona_cache = []
+    for lat, lon in coords:
+        zona_cache.append(zona_info(lat, lon))  # función en memoria
+
+    # -------------------------------------------------
+    # 5. Generar TODAS las aristas DIRIGIDAS con su peso
+    #    Dirección: de peor accesibilidad → mejor accesibilidad
+    #    (si empate: riesgo, bonificación, puntaje)
+    # -------------------------------------------------
+    all_edges_list = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            lat1, lon1 = coords[i]
+            lat2, lon2 = coords[j]
+            d = haversine(lat1, lon1, lat2, lon2)
+
+            Z_a = zona_cache[i]
+            Z_b = zona_cache[j]
+
+            # ---- DETERMINAR DIRECCIÓN ----
+            if Z_a["accesibilidad"] < Z_b["accesibilidad"]:
+                from_node, to_node = i, j
+                Z_dest = Z_b
+            elif Z_a["accesibilidad"] > Z_b["accesibilidad"]:
+                from_node, to_node = j, i
+                Z_dest = Z_a
+            else:
+                # Empate: usar riesgo (más riesgo = peor)
+                if Z_a["riesgo"] > Z_b["riesgo"]:
+                    from_node, to_node = i, j
+                    Z_dest = Z_b
+                elif Z_a["riesgo"] < Z_b["riesgo"]:
+                    from_node, to_node = j, i
+                    Z_dest = Z_a
+                else:
+                    # Empate: usar bonificación (más bonif = peor)
+                    if Z_a["bonificacion_serums"] > Z_b["bonificacion_serums"]:
+                        from_node, to_node = i, j
+                        Z_dest = Z_b
+                    elif Z_a["bonificacion_serums"] < Z_b["bonificacion_serums"]:
+                        from_node, to_node = j, i
+                        Z_dest = Z_a
+                    else:
+                        # Empate final: usar puntaje_serums (más puntaje = peor)
+                        if Z_a["puntaje_serums"] > Z_b["puntaje_serums"]:
+                            from_node, to_node = i, j
+                            Z_dest = Z_b
+                        else:
+                            from_node, to_node = j, i
+                            Z_dest = Z_a
+
+            # ---- PESO SANITARIO usando el destino (mejor) ----
+            peso_sanitario = (
+                d
+                + Z_dest["riesgo"]
+                + Z_dest["accesibilidad"]
+                - Z_dest["bonificacion_serums"]
+                - Z_dest["puntaje_serums"]
+            )
+
+            all_edges_list.append(
+                (
+                    round(d, 3),
+                    from_node,
+                    to_node,               # dirección: from_node -> to_node
+                    round(peso_sanitario, 3),
+                    Z_dest,
+                )
+            )
+
+    # Ordenar por distancia (sirve para MST)
+    all_edges_list.sort(key=lambda x: x[0])
+
+    # -----------------------------------------
+    # 6. Construir el MST (usando UF sobre los nodos)
+    #    Ojo: la conectividad es no dirigida, pero la arista
+    #    que se mete al MST mantiene su dirección.
+    # -----------------------------------------
+    uf = UFDS_UF(n)
+    mst_edges_internal = []
+
+    for d, a, b, w, zona in all_edges_list:
+        if uf.union(a, b):
+            mst_edges_internal.append((d, a, b, w, zona))
+        if len(mst_edges_internal) == n - 1:
+            break
+
+    # -----------------------------------------
+    # 7. K vecinos adicionales (KNN)
+    # -----------------------------------------
+    # Matriz de distancias simétrica solo para elegir vecinos,
+    # pero luego recuperamos la arista con su dirección original.
+    dist_matrix = [[0] * n for _ in range(n)]
+    for d, a, b, w, zona in all_edges_list:
+        dist_matrix[a][b] = d
+        dist_matrix[b][a] = d
+
+    extra_edges_internal = []
+
+    for i in range(n):
+        dist_list = [(dist_matrix[i][j], i, j) for j in range(n) if j != i and dist_matrix[i][j] > 0]
+        dist_list.sort(key=lambda x: x[0])
+
+        for k in range(min(K, len(dist_list))):
+            d_ij, a, b = dist_list[k]
+
+            # Recuperar la arista original dirigida (a->b o b->a)
+            edge = None
+            for item in all_edges_list:
+                d2, aa, bb, w2, zona2 = item
+                if (aa == a and bb == b) or (aa == b and bb == a):
+                    edge = (d2, aa, bb, w2, zona2)
+                    break
+
+            if edge is None:
+                continue
+
+            if edge not in mst_edges_internal and edge not in extra_edges_internal:
+                extra_edges_internal.append(edge)
+
+    # -----------------------------------------
+    # 8. Formar JSON final
+    #    IMPORTANTE: cluster_a = FROM, cluster_b = TO
+    # -----------------------------------------
+    final_edges = []
+
+    for d, a, b, w, zona in mst_edges_internal:
+        final_edges.append({
+            "type": "mst",
+            "cluster_a": a,             # origen
+            "cluster_b": b,             # destino
+            "distance_km": d,
+            "peso_sanitario": w,
+            "sanitario": zona,
+            "centroid_a": coords[a],
+            "centroid_b": coords[b],
+        })
+
+    for d, a, b, w, zona in extra_edges_internal:
+        final_edges.append({
+            "type": "extra",
+            "cluster_a": a,             # origen
+            "cluster_b": b,             # destino
+            "distance_km": d,
+            "peso_sanitario": w,
+            "sanitario": zona,
+            "centroid_a": coords[a],
+            "centroid_b": coords[b],
+        })
+
+    return {
+        "n_clusters": n,
+        "clusters": clusters,
+        "mst_edges": [e for e in final_edges if e["type"] == "mst"],
+        "extra_edges": [e for e in final_edges if e["type"] == "extra"],
+        "all_edges": final_edges,
+    }
 
 # -----------------------------------------------------------
 # Función: Detectar ciclos negativos
@@ -1295,7 +1493,7 @@ def bellman_paths_V1(R_km: float,
 
 
 # ------------------------------------------------------------------------------------------
-# API: Bellman-Ford entre clusters finales con pesos finales e identificación de ciclos
+# API: Bellman-Ford entre clusters finales con pesos finales e identificación de ciclos 2.0
 # ------------------------------------------------------------------------------------------
 @app.get("/api/bellman_paths_V2")
 
@@ -1479,3 +1677,174 @@ def bellman_paths_V2(R_km: float,
     }
 
 
+# ------------------------------------------------------------------------------------------
+# API: Bellman-Ford entre clusters finales con pesos finales e identificación de ciclos 3.0
+# ------------------------------------------------------------------------------------------
+@app.get("/api/bellman_paths_V3")
+def bellman_paths_V3(R_km: float,
+                     cantidad_Grupo: int,
+                     gravedad: str,
+                     K: int = 3,
+                     origen: int = 0,
+                     destino: int | None = None,
+                     top: int = 4):
+
+    # 1. Obtener grafo dirigido desde la versión corregida
+    graph = mst_clusters_plus_V4(R_km, cantidad_Grupo, gravedad, K)
+
+    n = graph["n_clusters"]
+    edges = graph["all_edges"]  # aristas dirigidas
+
+    # -------------------------------
+    # 2. Construir lista de aristas (u → v, peso)
+    # -------------------------------
+    edge_list = []
+    for e in edges:
+        u = e["cluster_a"]
+        v = e["cluster_b"]
+        w = e["peso_sanitario"]
+        edge_list.append((u, v, w))  # << SOLO dirección correcta
+
+    # ------------------------------------------------------
+    # 3. Ejecutar Bellman–Ford con detección de ciclo negativo
+    # ------------------------------------------------------
+    INF = float("inf")
+    dist = [INF] * n
+    parent = [-1] * n
+    dist[origen] = 0
+
+    # Relajación n-1 veces
+    for _ in range(n - 1):
+        updated = False
+        for u, v, w in edge_list:
+            if dist[u] != INF and dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                parent[v] = u
+                updated = True
+        if not updated:
+            break
+
+    # -----------------------------------------
+    # 3b. Detección de ciclo negativo
+    # -----------------------------------------
+    ciclo_negativo_nodo = None
+
+    for u, v, w in edge_list:
+        if dist[u] != INF and dist[u] + w < dist[v]:
+            ciclo_negativo_nodo = v
+            break
+
+    # -----------------------------------------
+    # 3c. Si hay ciclo negativo → reconstruirlo
+    # -----------------------------------------
+    if ciclo_negativo_nodo is not None:
+
+        x = ciclo_negativo_nodo
+        for _ in range(n):  # asegurar caer dentro del ciclo
+            x = parent[x]
+
+        # reconstrucción del ciclo
+        cycle_nodes = [x]
+        cur = parent[x]
+        while cur != x and cur != -1:
+            cycle_nodes.append(cur)
+            cur = parent[cur]
+
+        cycle_nodes.append(x)  # cerrar ciclo
+
+        # reconstruir aristas del ciclo
+        cycle_edges = []
+        for i in range(len(cycle_nodes) - 1):
+            a = cycle_nodes[i]
+            b = cycle_nodes[i + 1]
+
+            for e in edges:
+                if e["cluster_a"] == a and e["cluster_b"] == b:  # << SOLO dirigido
+                    cycle_edges.append(e)
+                    break
+
+        return {
+            "modo": "ciclo_negativo",
+            "error": True,
+            "mensaje": "El grafo contiene un ciclo negativo. Bellman–Ford no puede calcular rutas.",
+            "cycle_nodes": cycle_nodes,
+            "cycle_edges": cycle_edges
+        }
+
+    # -------------------------------
+    # 4. Si hay destino → devolver ruta única
+    # -------------------------------
+    if destino is not None:
+        if dist[destino] == INF:
+            return {"error": "No existe ruta hacia ese destino"}
+
+        # reconstruir ruta
+        path = []
+        cur = destino
+        while cur != -1:
+            path.append(cur)
+            cur = parent[cur]
+        path.reverse()
+
+        # reconstruir aristas exactas
+        ruta_aristas = []
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+            for e in edges:
+                if e["cluster_a"] == a and e["cluster_b"] == b:  # << dirigido
+                    ruta_aristas.append(e)
+                    break
+
+        return {
+            "modo": "origen_destino",
+            "origen": origen,
+            "destino": destino,
+            "ruta": path,
+            "aristas": ruta_aristas,
+            "costo_total": dist[destino]
+        }
+
+    # ---------------------------------------------
+    # 5. Devolver TOP N mejores rutas (sin destino)
+    # ---------------------------------------------
+    ranking = [(dist[nodo], nodo) for nodo in range(n)
+               if nodo != origen and dist[nodo] < INF]
+
+    ranking.sort(key=lambda x: x[0])
+    ranking = ranking[:top]
+
+    rutas = []
+
+    for costo, nodo_final in ranking:
+        # reconstruir ruta
+        path = []
+        cur = nodo_final
+        while cur != -1:
+            path.append(cur)
+            cur = parent[cur]
+        path.reverse()
+
+        # reconstruir aristas
+        ruta_aristas = []
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+            for e in edges:
+                if e["cluster_a"] == a and e["cluster_b"] == b:
+                    ruta_aristas.append(e)
+                    break
+
+        rutas.append({
+            "destino": nodo_final,
+            "ruta": path,
+            "aristas": ruta_aristas,
+            "costo_total": costo
+        })
+
+    return {
+        "modo": "top_rutas",
+        "origen": origen,
+        "top": top,
+        "mejores_rutas": rutas
+    }

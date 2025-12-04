@@ -943,7 +943,7 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
   try {
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
     const res = await fetch(url);
     const data = await res.json();
@@ -999,12 +999,12 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
     if (destino === null) {
       // urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
-      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
 
     }
     else {
       //urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
-      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
 
     }
 
@@ -1161,7 +1161,7 @@ async function drawMSTLinesPre3(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
     // 2. Solicitar MST + conexiones extra
     // =========================================================
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
 
     const res = await fetch(url);
@@ -1229,7 +1229,7 @@ async function drawMSTLinesPre3(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
 
@@ -1242,7 +1242,7 @@ async function drawMSTLinesPre3(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
     }
@@ -1424,7 +1424,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     // 2. Solicitar MST + conexiones extra
     // =========================================================
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
-    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
 
     const res = await fetch(url);
@@ -1492,7 +1492,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
 
@@ -1505,7 +1505,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
     }
@@ -1951,11 +1951,11 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
 
   if (destinoInvalido) {
     urlPath =
-      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?` +
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?` +
       `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
   } else {
     urlPath =
-      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?` +
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?` +
       `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
   }
 
