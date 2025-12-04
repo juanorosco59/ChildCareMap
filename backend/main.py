@@ -1102,6 +1102,61 @@ def mst_clusters_plus_V3(R_km: float, cantidad_Grupo: int, gravedad: str, K: int
     }
 
 
+# -----------------------------------------------------------
+# Función: Detectar ciclos negativos
+# -----------------------------------------------------------
+def bellman_detect_cycle(n, edge_list, origen):
+    INF = float("inf")
+    dist = [INF] * n
+    parent = [-1] * n
+
+    dist[origen] = 0
+
+    # FASE 1 — Relajaciones normales (n-1)
+    for _ in range(n - 1):
+        improved = False
+        for u, v, w in edge_list:
+            if dist[u] != INF and dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                parent[v] = u
+                improved = True
+        if not improved:
+            break
+
+    # FASE 2 — Buscar ciclo negativo
+    cycle_node = None
+    for u, v, w in edge_list:
+        if dist[u] != INF and dist[u] + w < dist[v]:
+            cycle_node = v
+            break
+
+    # Si NO hay ciclo negativo → devolver dist y parent
+    if cycle_node is None:
+        return {
+            "error": False,
+            "dist": dist,
+            "parent": parent
+        }
+
+    # RECONSTRUIR ciclo negativo
+    for _ in range(n):
+        cycle_node = parent[cycle_node]
+
+    cycle = [cycle_node]
+    x = parent[cycle_node]
+
+    while x != cycle_node:
+        cycle.append(x)
+        x = parent[x]
+    cycle.append(cycle_node)
+    cycle.reverse()
+
+    return {
+        "error": True,
+        "message": "NEGATIVE_CYCLE_DETECTED",
+        "cycle_nodes": cycle
+    }
+
 
 
 # -----------------------------------------------------------
@@ -1237,5 +1292,190 @@ def bellman_paths_V1(R_km: float,
         "mejores_rutas": rutas
     }
 
+
+
+# ------------------------------------------------------------------------------------------
+# API: Bellman-Ford entre clusters finales con pesos finales e identificación de ciclos
+# ------------------------------------------------------------------------------------------
+@app.get("/api/bellman_paths_V2")
+
+def bellman_paths_V2(R_km: float,
+                  cantidad_Grupo: int,
+                  gravedad: str,
+                  K: int = 3,
+                  origen: int = 0,
+                  destino: int | None = None,
+                  top: int = 4):
+    """
+    Ejecuta Bellman–Ford usando el grafo generado por /api/mst_clusters_plusPro.
+    
+    - Si destino está definido → devuelve la mejor ruta origen→destino.
+    - Si destino NO está definido → devuelve el TOP N (top=4 por defecto) mejores rutas.
+    """
+
+    # 1. Obtener grafo completo con pesos sanitarios ya calculados
+    graph = mst_clusters_plus_V3(R_km, cantidad_Grupo, gravedad, K)
+
+    n = graph["n_clusters"]
+    edges = graph["all_edges"]  # contiene centroides + peso_sanitario
+
+    # -------------------------------
+    # 2. Construir lista de aristas (u, v, peso)
+    # -------------------------------
+    edge_list = []
+    for e in edges:
+        u = e["cluster_a"]
+        v = e["cluster_b"]
+        w = e["peso_sanitario"]
+        edge_list.append((u, v, w))
+        edge_list.append((v, u, w))  # grafo no dirigido
+
+    # ------------------------------------------------------
+    # 3. Ejecutar Bellman-Ford con detección de ciclo negativo
+    # ------------------------------------------------------
+
+    INF = float("inf")
+    dist = [INF] * n
+    parent = [-1] * n
+    dist[origen] = 0
+
+    # Relajación estándar n-1 veces
+    for _ in range(n - 1):
+        updated = False
+        for u, v, w in edge_list:
+            if dist[u] != INF and dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                parent[v] = u
+                updated = True
+        if not updated:
+            break
+
+    # -----------------------------------------
+    # 3b. Detección de ciclo negativo
+    # -----------------------------------------
+    ciclo_negativo_nodo = None
+    for u, v, w in edge_list:
+        if dist[u] != INF and dist[u] + w < dist[v]:
+            ciclo_negativo_nodo = v
+            break
+
+    # -----------------------------------------
+    # 3c. Si hay ciclo negativo → reconstruirlo
+    # -----------------------------------------
+    if ciclo_negativo_nodo is not None:
+
+        # caminar n veces para asegurar caer dentro del ciclo
+        x = ciclo_negativo_nodo
+        for _ in range(n):
+            x = parent[x]
+
+        # reconstruir ciclo
+        cycle_nodes = [x]
+        cur = parent[x]
+        while cur != x and cur != -1:
+            cycle_nodes.append(cur)
+            cur = parent[cur]
+
+        cycle_nodes.append(x)  # cerrar ciclo
+
+        # recolectar aristas del ciclo (en tu mismo formato actual)
+        cycle_edges = []
+        for i in range(len(cycle_nodes) - 1):
+            a = cycle_nodes[i]
+            b = cycle_nodes[i + 1]
+            for e in edges:
+                if (e["cluster_a"] == a and e["cluster_b"] == b) or \
+                   (e["cluster_a"] == b and e["cluster_b"] == a):
+                    cycle_edges.append(e)
+                    break
+
+        return {
+            "modo": "ciclo_negativo",
+            "error": True,
+            "mensaje": "El grafo contiene un ciclo negativo. Bellman–Ford no puede calcular rutas.",
+            "cycle_nodes": cycle_nodes,
+            "cycle_edges": cycle_edges
+        }
+
+
+
+    # -------------------------------
+    # 4. Si hay destino → devolver ruta única
+    # -------------------------------
+    if destino is not None:
+        if dist[destino] == INF:
+            return {"error": "No existe ruta hacia ese destino"}
+
+        # reconstruir la ruta
+        path = []
+        cur = destino
+        while cur != -1:
+            path.append(cur)
+            cur = parent[cur]
+        path.reverse()
+
+        ruta_aristas = []
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+            # buscar arista exacta
+            for e in edges:
+                if (e["cluster_a"] == a and e["cluster_b"] == b) or \
+                   (e["cluster_a"] == b and e["cluster_b"] == a):
+                    ruta_aristas.append(e)
+                    break
+
+        return {
+            "modo": "origen_destino",
+            "origen": origen,
+            "destino": destino,
+            "ruta": path,
+            "aristas": ruta_aristas,
+            "costo_total": dist[destino]
+        }
+
+    # ---------------------------------------------
+    # 5. Sin destino devuelve mejores rutas (top)
+    # ---------------------------------------------
+    ranking = []
+    for nodo in range(n):
+        if nodo != origen and dist[nodo] < INF:
+            ranking.append((dist[nodo], nodo))
+
+    ranking.sort(key=lambda x: x[0])
+    ranking = ranking[:top]
+
+    rutas = []
+    for costo, nodo_final in ranking:
+        path = []
+        cur = nodo_final
+        while cur != -1:
+            path.append(cur)
+            cur = parent[cur]
+        path.reverse()
+
+        ruta_aristas = []
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+            for e in edges:
+                if (e["cluster_a"] == a and e["cluster_b"] == b) or \
+                   (e["cluster_a"] == b and e["cluster_b"] == a):
+                    ruta_aristas.append(e)
+                    break
+
+        rutas.append({
+            "destino": nodo_final,
+            "ruta": path,
+            "aristas": ruta_aristas,
+            "costo_total": costo
+        })
+
+    return {
+        "modo": "top_rutas",
+        "origen": origen,
+        "top": top,
+        "mejores_rutas": rutas
+    }
 
 

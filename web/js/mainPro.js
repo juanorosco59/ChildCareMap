@@ -999,12 +999,12 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 
     if (destino === null) {
       // urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
-      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}`;
 
     }
     else {
       //urlPath = `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
-      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
+      urlPath = `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${origen}&destino=${destino}`;
 
     }
 
@@ -1229,7 +1229,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
 
 
@@ -1242,7 +1242,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
       urlPath =
-        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
         `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
 
     }
@@ -1675,11 +1675,11 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
 
   if (destinoInvalido) {
     urlPath =
-      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?` +
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?` +
       `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
   } else {
     urlPath =
-      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V1?` +
+      `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?` +
       `R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
   }
 
