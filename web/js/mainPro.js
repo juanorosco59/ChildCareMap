@@ -1144,7 +1144,7 @@ async function drawMSTLinesPre2(map, km, cantidad_Grupo, gravedad, nodoOrigen, n
 // ---------------------------------------------------------------------------
 // Función: Dibujar las líneas de conexión del MST (Versión 3.0)
 // ---------------------------------------------------------------------------
-async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+async function drawMSTLinesPre3(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
 
   try {
     // =========================================================
@@ -1402,6 +1402,282 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     console.error("Error en drawMSTLines:", err);
   }
 }
+
+
+// ---------------------------------------------------------------------------
+// Función: Dibujar las líneas de conexión del MST (Versión 4.0)
+// ---------------------------------------------------------------------------
+async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+
+  try {
+    // =========================================================
+    // 1. Crear capas globales si no existen
+    // =========================================================
+    if (!window.graphLayer) window.graphLayer = L.layerGroup().addTo(map);   // MST + extra_edges
+    if (!window.routeLayer) window.routeLayer = L.layerGroup().addTo(map);   // Rutas Bellman
+
+    // Crear capas nuevas siembre antes de dibujar
+    window.graphLayer = L.layerGroup().addTo(map);
+    window.routeLayer = L.layerGroup().addTo(map);
+
+    // =========================================================
+    // 2. Solicitar MST + conexiones extra
+    // =========================================================
+    // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("MST DATA:", data);
+
+
+    // =========================================================
+    // 3. Dibujar MST (rojo)
+    // =========================================================
+    if (Array.isArray(data.mst_edges)) {
+      data.mst_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: "#e63946",
+          weight: 3,
+          opacity: 0.9
+        }).addTo(window.graphLayer);
+      });
+    }
+
+
+    // =========================================================
+    // 4. Dibujar extra_edges (azul)
+    // =========================================================
+    if (Array.isArray(data.extra_edges)) {
+      data.extra_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: "#457b9d",
+          weight: 2,
+          opacity: 0.8,
+          dashArray: "6, 6"
+        }).addTo(window.graphLayer);
+      });
+    }
+
+
+    // =========================================================
+    // 5. Construir URL de Bellman-Ford
+    // =========================================================
+    let urlPath;
+
+    const destinoInvalido =
+      nodoDestino === null ||
+      nodoDestino === "" ||
+      nodoDestino === 0 ||
+      isNaN(nodoDestino);
+
+    if (nodoDestino === null || nodoDestino === "" || isNaN(nodoDestino)) {
+      // Sin destino → top_rutas
+      //   urlPath =
+      //  `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+      //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+
+      urlPath =
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+
+
+
+
+    } else {
+      // Con destino → ruta origen-destino
+      //urlPath =
+      //  `http://127.0.0.1:8000/api/bellman_paths_V1?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+      //  `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+
+      urlPath =
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V2?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+
+    }
+
+    console.log("URL Bellman:", urlPath);
+
+
+    // =========================================================
+    // 6. Ejecutar Bellman-Ford
+    // =========================================================
+    const resPath = await fetch(urlPath);
+    const pathData = await resPath.json();
+
+    console.log("Bellman-Ford:", pathData);
+
+    displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino);
+
+    if (pathData.modo === "ciclo_negativo") {
+
+      drawNegativeCycle(pathData);    // <--- función nueva para dibujar
+      showNegativeCycleTable(pathData); // <--- función nueva para tabla
+
+      alert("Se detectó un ciclo negativo. No es posible calcular rutas Bellman-Ford.");
+
+      return;
+    }
+
+
+
+    if (pathData.error) {
+      alert("No existe ruta entre origen y destino");
+      return;
+    }
+
+    // =========================================================
+    // 7. Escenario A — modo origen_destino
+    // =========================================================
+    if (pathData.modo === "origen_destino") {
+
+      // Dibujar aristas de la ruta (verde)
+      pathData.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        // Crear polyline y GUARDARLA en una variable
+        const poly = L.polyline(
+          [[A[0], A[1]], [B[0], B[1]]],
+          {
+            color: "#2ecc71",
+            weight: 6,
+            opacity: 1.0
+          }
+        ).addTo(window.routeLayer);
+
+        // ------------------------------
+        // Tooltip con todos los detalles
+        // ------------------------------
+        poly.bindTooltip(`
+          <b>Detalle de ruta</b><br>
+          <b>Tipo:</b> ${edge.type}<br>
+          <b>Distancia:</b> ${edge.distance_km.toFixed(2)} km<br>
+          <b>Peso sanitario:</b> ${edge.peso_sanitario.toFixed(2)}<br>
+          <b>Accesibilidad:</b> ${edge.sanitario.accesibilidad}<br>
+          <b>Riesgo:</b> ${edge.sanitario.riesgo}<br>
+          <b>Bonificación SERUMS:</b> ${edge.sanitario.bonificacion_serums}<br>
+          <b>Puntaje SERUMS:</b> ${edge.sanitario.puntaje_serums}
+        `);
+
+      });
+
+      // Dibujar nodos
+      pathData.ruta.forEach((nodeId, stepIndex) => {
+
+        const edge = pathData.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+
+        if (!edge) return;
+
+        const point =
+          edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 9,
+          color: "#2ecc71",
+          fillColor: "#27ae60",
+          fillOpacity: 1
+        })
+          .bindTooltip(`Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+
+      return; // FIN escenario A
+    }
+
+
+    // =========================================================
+    // 8. Escenario B — modo top_rutas
+    // =========================================================
+
+    const routeColors = [
+      "#e63946",
+      "#457b9d",
+      "#2a9d8f",
+      "#f4a261",
+      "#8d5a97",
+      "#1d3557"
+    ];
+
+    pathData.mejores_rutas.forEach((rutaObj, idx) => {
+      const color = routeColors[idx % routeColors.length];
+
+      // Aristas de cada ruta
+      rutaObj.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+
+
+
+
+        const poly = L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: color, // verde para origen-destino o el color dinámico
+          weight: 6,
+          opacity: 1
+        }).addTo(window.routeLayer);
+
+        poly.bindTooltip(`
+        <b>Detalle de ruta</b><br>
+        <b>Tipo:</b> ${edge.type}<br>
+        <b>Peso sanitario:</b> ${edge.peso_sanitario.toFixed(2)}<br>
+        <b>Distancia (+):</b> ${edge.distance_km.toFixed(2)} km<br>
+        <b>Accesibilidad (+):</b> ${edge.sanitario.accesibilidad}<br>
+        <b>Riesgo (+):</b> ${edge.sanitario.riesgo}<br>
+        <b>Bonificación (-):</b> ${edge.sanitario.bonificacion_serums}<br>
+        <b>Puntaje SERUMS (-):</b> ${edge.sanitario.puntaje_serums}
+      `);
+
+
+
+      });
+
+      // Nodos de cada ruta
+      rutaObj.ruta.forEach((nodeId, stepIndex) => {
+        const edge = rutaObj.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+        if (!edge) return;
+
+        const point =
+          edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 8,
+          color: color,
+          fillColor: color,
+          fillOpacity: 1
+        })
+          .bindTooltip(`Ruta ${idx + 1}<br>Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+    });
+
+
+  } catch (err) {
+    console.error("Error en drawMSTLines:", err);
+  }
+}
+
 
 
 
@@ -1696,6 +1972,65 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
   }
 
   // ============================================================
+  // MODO X: Ciclo negativo
+  // ============================================================
+  if (result.modo === "ciclo_negativo") {
+
+    let html = `
+    <h3 style="color:#ff00ff;">⚠️ Ciclo negativo detectado</h3>
+    <p>Bellman-Ford no puede calcular rutas porque existe un ciclo cuyo peso total es negativo.</p>
+
+    <h4>Nodos del ciclo</h4>
+    <p>${result.cycle_nodes.join(" → ")}</p>
+
+    <h4>Aristas del ciclo</h4>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nodo A</th>
+          <th>Nodo B</th>
+          <th>Peso sanitario</th>
+          <th>Distancia (km)</th>
+          <th>Accesibilidad</th>
+          <th>Riesgo</th>
+          <th>Bonif. SERUMS</th>
+          <th>Puntaje SERUMS</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+    result.cycle_edges.forEach(edge => {
+      html += `
+      <tr>
+        <td>${edge.cluster_a}</td>
+        <td>${edge.cluster_b}</td>
+        <td>${edge.peso_sanitario}</td>
+        <td>${edge.distance_km}</td>
+        <td>${edge.sanitario.accesibilidad}</td>
+        <td>${edge.sanitario.riesgo}</td>
+        <td>${edge.sanitario.bonificacion_serums}</td>
+        <td>${edge.sanitario.puntaje_serums}</td>
+      </tr>
+    `;
+    });
+
+    html += `
+      </tbody>
+    </table>
+
+    <p style="color:#ff00ff; font-weight:bold;">
+      Este ciclo se dibujará en el mapa en color magenta.
+    </p>
+  `;
+
+    container.innerHTML = html;
+    return;
+  }
+
+
+  // ============================================================
   // MODO A: origen → destino
   // ============================================================
   if (result.modo === "origen_destino") {
@@ -1797,4 +2132,114 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
 
     container.innerHTML = html;
   }
+}
+
+
+// ===============================================================
+// Función auxiliar: Dibujar ciclo negativo
+// ===============================================================
+function drawNegativeCycle(pathData) {
+
+  if (!window.routeLayer) return;
+
+  const edges = pathData.cycle_edges;
+  const nodes = pathData.cycle_nodes;
+
+  // Color especial para ciclos negativos
+  const color = "#ff00ff";  // magenta fuerte
+
+  // Dibujar las aristas del ciclo
+  edges.forEach(edge => {
+    const A = edge.centroid_a;
+    const B = edge.centroid_b;
+
+    const poly = L.polyline(
+      [[A[0], A[1]], [B[0], B[1]]],
+      {
+        color: color,
+        weight: 7,
+        opacity: 1,
+        dashArray: "4, 6"
+      }
+    ).addTo(window.routeLayer);
+
+    poly.bindTooltip(`
+      <b>Arista del ciclo</b><br>
+      Peso sanitario: ${edge.peso_sanitario}<br>
+      Distancia: ${edge.distance_km} km
+    `);
+  });
+
+  // Dibujar nodos del ciclo
+  nodes.forEach((nodeId, idx) => {
+
+    const edge = edges.find(e =>
+      e.cluster_a === nodeId || e.cluster_b === nodeId
+    );
+
+    if (!edge) return;
+
+    const point =
+      edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+    L.circleMarker([point[0], point[1]], {
+      radius: 10,
+      color: color,
+      fillColor: color,
+      fillOpacity: 1
+    })
+      .bindTooltip(`Nodo ${nodeId}<br>Índice en ciclo: ${idx}`)
+      .addTo(window.routeLayer);
+  });
+}
+
+
+// ===============================================================
+// Función auxiliar: Mostrar tabla con ciclo negativo
+// ===============================================================
+function showNegativeCycleTable(pathData) {
+
+  const container = document.getElementById("pacient-info-container");
+
+  if (!container) {
+    console.error("No existe el contenedor #pacient-info-container");
+    return;
+  }
+
+  const edges = pathData.cycle_edges;
+  const nodes = pathData.cycle_nodes;
+
+  let html = `
+      <h3 style="color:#ff00ff;">⚠️ Ciclo negativo detectado</h3>
+      <table border="1" cellpadding="5" style="border-collapse:collapse;">
+        <tr>
+          <th>Nodo A</th>
+          <th>Nodo B</th>
+          <th>Peso sanitario</th>
+          <th>Distancia</th>
+          <th>Accesibilidad</th>
+          <th>Riesgo</th>
+          <th>Bonificación</th>
+          <th>Puntaje SERUMS</th>
+        </tr>
+  `;
+
+  edges.forEach(e => {
+    html += `
+      <tr>
+        <td>${e.cluster_a}</td>
+        <td>${e.cluster_b}</td>
+        <td>${e.peso_sanitario}</td>
+        <td>${e.distance_km}</td>
+        <td>${e.sanitario.accesibilidad}</td>
+        <td>${e.sanitario.riesgo}</td>
+        <td>${e.sanitario.bonificacion_serums}</td>
+        <td>${e.sanitario.puntaje_serums}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table><br><b>Secuencia de nodos:</b> ${nodes.join(" → ")}`;
+
+  container.innerHTML = html;
 }
