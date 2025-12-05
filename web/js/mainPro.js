@@ -785,10 +785,10 @@ function anemiaToColorByGravity(value) {
 }
 
 // ------------------------------------------------------------------------
-// Función: Cargar grupos desde /api/union_find_clusters
+// Función: Cargar grupos desde /api/union_find_clusters 1.0
 // ------------------------------------------------------------------------
 
-async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestino) {
+async function loadCluster1(km, cantidadCluster, gravedad, nodoOrigen, nodoDestino) {
   try {
     // Leer radio desde el input #radioKm (si existe)
     //let km = 10;
@@ -909,6 +909,136 @@ async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestin
 
 
 
+// ------------------------------------------------------------------------
+// Función: Cargar grupos desde /api/union_find_clusters 2.0
+// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
+// Función: Cargar clusters desde /mst_clusters_plus_V4
+// ------------------------------------------------------------------------
+async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestino) {
+  try {
+    console.log("Solicitando clusters + MST con radio:", km);
+
+    // NUEVO: ahora pedimos directamente el MST y los clusters incluidos
+    const url =
+      `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4` +
+      `?R_km=${km}&cantidad_Grupo=${cantidadCluster}&gravedad=${gravedad}&K=3`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("DATA MST+Clusters:", data);
+
+    if (!data.clusters) {
+      alert("Error: backend no devolvió clusters");
+      return;
+    }
+
+    // =========================================================
+    // 1. Limpiar mapa previo
+    // =========================================================
+    if (window._mapInstance) {
+      window._mapInstance.remove();
+      window._mapInstance = null;
+    }
+
+    // =========================================================
+    // 2. Crear contenedor del mapa
+    // =========================================================
+    let mapDiv = document.getElementById("map-container");
+    if (!mapDiv) {
+      mapDiv = document.createElement("div");
+      mapDiv.id = "map-container";
+      mapDiv.style.width = "100%";
+      mapDiv.style.height = "900px";
+      mapDiv.style.border = "2px solid #ccc";
+      mapDiv.style.borderRadius = "12px";
+      mapDiv.style.overflow = "hidden";
+
+      const parent = document.getElementById("sigma-container");
+      parent.innerHTML = "";
+      parent.appendChild(mapDiv);
+    }
+
+    // =========================================================
+    // 3. Crear mapa centrado en Perú
+    // =========================================================
+    const map = L.map(mapDiv).setView([-9.19, -75.0152], 6);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(map);
+
+    // =========================================================
+    // 4. Dibujar clusters tal como llegan del MST
+    // =========================================================
+    data.clusters.forEach((c, index) => {
+      const lat = c.centroid.latitud;
+      const lon = c.centroid.longitud;
+      const id = index;
+
+      // Círculo del cluster
+      L.circleMarker([lat, lon], {
+        radius: 12,
+        color: anemiaToColorByGravity(gravedad),
+        fillColor: anemiaToColorByGravity(gravedad),
+        fillOpacity: 0.9,
+        weight: 2,
+      })
+        .addTo(map)
+        .bindPopup(`
+          <b>Id de grupo:</b> ${id}<br>
+          <b>Tamaño:</b> ${c.size}<br>
+          <b>Miembros:</b> ${c.members.join(", ")}<br>
+          <b>Lat:</b> ${lat}<br>
+          <b>Lon:</b> ${lon}
+        `);
+
+      // Etiqueta centrada con el ID (muy visible)
+      L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: "",
+          html: `
+            <div style="
+              display:flex;
+              justify-content:center;
+              align-items:center;
+              width:24px;
+              height:24px;
+              font-size:15px;
+              font-weight:bold;
+              color:black;
+              pointer-events:none;
+            ">
+              ${id}
+            </div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        }),
+        interactive: false
+      }).addTo(map);
+
+    });
+
+    // =========================================================
+    // 5. Dibujar MST + rutas Bellman como antes
+    // =========================================================
+    await drawMSTLines(
+      map,
+      km,
+      cantidadCluster,
+      gravedad,
+      nodoOrigen,
+      nodoDestino
+    );
+
+    window._mapInstance = map;
+
+  } catch (err) {
+    console.error("Error al cargar clusters:", err);
+  }
+}
 
 // ------------------------------------------------------------------------
 // Función: Dibujar las líneas de conexión del MST (Versión 1.0)
