@@ -8,6 +8,10 @@ import bindLeafletLayer from "@sigma/layer-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+//Dirección
+import "leaflet-arrowheads";
+
+
 
 export default function main() {
   // Obtener todos los botones de pestañas (Resumen / Mapa / Datos)
@@ -865,6 +869,33 @@ async function loadCluster(km, cantidadCluster, gravedad, nodoOrigen, nodoDestin
           <b>Latitud:</b> ${lat}<br>
           <b>Longitud:</b> ${lon}
         `);
+
+
+
+      L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: "",
+          html: `
+      <div style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        width:24px;
+        height:24px;
+        font-size:15px;
+        font-weight:bold;
+        color:black;
+        pointer-events:none;
+      ">
+        ${c.cluster_id}
+      </div>
+    `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        }),
+        interactive: false
+      }).addTo(map);
+
     });
 
     await drawMSTLines(map, km, cantidadCluster, gravedad, nodoOrigen, nodoDestino);
@@ -1423,6 +1454,7 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
     // =========================================================
     // 2. Solicitar MST + conexiones extra
     // =========================================================
+
     // const url = `http://127.0.0.1:8000/api/mst_clusters_plus_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
     const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
 
@@ -1441,14 +1473,20 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
         const A = edge.centroid_a;
         const B = edge.centroid_b;
 
-        L.polyline([
-          [A[0], A[1]],
-          [B[0], B[1]]
-        ], {
-          color: "#e63946",
-          weight: 3,
-          opacity: 0.9
-        }).addTo(window.graphLayer);
+        marcadorDireccionado(window.graphLayer, A, B, "#e63946");
+
+
+        //L.polyline([
+        //  [A[0], A[1]],
+        //  [B[0], B[1]]
+        //], {
+        //  color: "#e63946",
+        //  weight: 3,
+        //  opacity: 0.9
+        //}).addTo(window.graphLayer);
+
+
+
       });
     }
 
@@ -1461,15 +1499,18 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
         const A = edge.centroid_a;
         const B = edge.centroid_b;
 
-        L.polyline([
-          [A[0], A[1]],
-          [B[0], B[1]]
-        ], {
-          color: "#457b9d",
-          weight: 2,
-          opacity: 0.8,
-          dashArray: "6, 6"
-        }).addTo(window.graphLayer);
+        marcadorDireccionado(window.graphLayer, A, B, "#457b9d");
+
+        //L.polyline([
+        //  [A[0], A[1]],
+        //  [B[0], B[1]]
+        //], {
+        //  color: "#457b9d",
+        //  weight: 2,
+        //  opacity: 0.8,
+        //  dashArray: "6, 6"
+        //}).addTo(window.graphLayer);
+
       });
     }
 
@@ -1672,6 +1713,262 @@ async function drawMSTLines(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoD
       });
     });
 
+
+  } catch (err) {
+    console.error("Error en drawMSTLines:", err);
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Función: Auxiliar de direcciones con rotación
+// ---------------------------------------------------------------------------
+
+function marcadorDireccionado(map, A, B, color = "red") {
+  const lat1 = A[0], lon1 = A[1];
+  const lat2 = B[0], lon2 = B[1];
+
+  // Dibujar la línea de conexión
+  L.polyline([A, B], {
+    color: color,
+    weight: 3,
+    opacity: 0.9
+  }).addTo(map);
+
+  // -----------------------------
+  //  Orientación
+  // -----------------------------
+
+  // Tamaño del triángulo de la flecha 
+  const size = 0.04;
+
+  // Puntos del triángulo sin rotar (apunta hacia abajo por defecto)
+  let p1 = [lat2, lon2];
+  let p2 = [lat2 - size, lon2 - size / 2];
+  let p3 = [lat2 - size, lon2 + size / 2];
+
+  // Ángulo real A→B
+  const angle = Math.atan2(lon2 - lon1, lat2 - lat1);
+
+  // Rotación de puntos alrededor del destino (p1)
+  function rotatePoint(lat, lon, cx, cy, ang) {
+    const dx = lat - cx;
+    const dy = lon - cy;
+
+    const newLat = dx * Math.cos(ang) - dy * Math.sin(ang) + cx;
+    const newLon = dx * Math.sin(ang) + dy * Math.cos(ang) + cy;
+
+    return [newLat, newLon];
+  }
+
+  const rp2 = rotatePoint(p2[0], p2[1], p1[0], p1[1], angle);
+  const rp3 = rotatePoint(p3[0], p3[1], p1[0], p1[1], angle);
+
+  // Dibujar flecha orientada correctamente
+  L.polygon([p1, rp2, rp3], {
+    color: color,
+    fillColor: color,
+    fillOpacity: 1,
+    weight: 1
+  }).addTo(map);
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Función: Dibujar las líneas de conexión del MST (Versión 5.0 con flechas)
+// ---------------------------------------------------------------------------
+async function drawMSTLines5(map, km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino) {
+
+  try {
+    // =========================================================
+    // 1. Crear capas globales si no existen
+    // =========================================================
+    if (!window.graphLayer) window.graphLayer = L.layerGroup().addTo(map);
+    if (!window.routeLayer) window.routeLayer = L.layerGroup().addTo(map);
+
+    window.graphLayer = L.layerGroup().addTo(map);
+    window.routeLayer = L.layerGroup().addTo(map);
+
+    // =========================================================
+    // 2. Solicitar MST + conexiones extra
+    // =========================================================
+    const url = `https://childcaremap-capabackend.up.railway.app/api/mst_clusters_plus_V4?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}&gravedad=${gravedad}&K=3`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("MST DATA:", data);
+
+    // =========================================================
+    // 3. Dibujar MST (rojo) con FLECHAS
+    // =========================================================
+    if (Array.isArray(data.mst_edges)) {
+      data.mst_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        //marcadorDireccionado(window.graphLayer, A, B, "#e63946");
+        L.polyline([
+          [A[0], A[1]],
+          [B[0], B[1]]
+        ], {
+          color: "#e63946",
+          weight: 3,
+          opacity: 0.9
+        }).addTo(window.graphLayer);
+
+
+      });
+    }
+
+    // =========================================================
+    // 4. Dibujar extra_edges (azul) con FLECHAS
+    // =========================================================
+    if (Array.isArray(data.extra_edges)) {
+      data.extra_edges.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        marcadorDireccionado(window.graphLayer, A, B, "#457b9d");
+
+
+      });
+    }
+
+    // =========================================================
+    // 5. Construir URL de Bellman-Ford
+    // =========================================================
+    let urlPath;
+
+    const destinoInvalido =
+      nodoDestino === null ||
+      nodoDestino === "" ||
+      nodoDestino === 0 ||
+      isNaN(nodoDestino);
+
+    if (destinoInvalido) {
+      urlPath =
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}`;
+    } else {
+      urlPath =
+        `https://childcaremap-capabackend.up.railway.app/api/bellman_paths_V3?R_km=${km}&cantidad_Grupo=${cantidad_Grupo}` +
+        `&gravedad=${gravedad}&K=3&origen=${nodoOrigen}&destino=${nodoDestino}`;
+    }
+
+    console.log("URL Bellman:", urlPath);
+
+    // =========================================================
+    // 6. Ejecutar Bellman-Ford
+    // =========================================================
+    const resPath = await fetch(urlPath);
+    const pathData = await resPath.json();
+
+    console.log("Bellman-Ford:", pathData);
+
+    displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, nodoDestino);
+
+    if (pathData.modo === "ciclo_negativo") {
+      drawNegativeCycle(pathData);
+      showNegativeCycleTable(pathData);
+      alert("Se detectó un ciclo negativo. No es posible calcular rutas Bellman-Ford.");
+      return;
+    }
+
+    if (pathData.error) {
+      alert("No existe ruta entre origen y destino, elija otra opción.");
+      return;
+    }
+
+    // =========================================================
+    // 7. Escenario A — modo origen_destino (verde) con FLECHAS
+    // =========================================================
+    if (pathData.modo === "origen_destino") {
+
+      pathData.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+
+        marcadorDireccionado(window.graphLayer, A, B, "#2ecc71");
+
+
+      });
+
+      // Dibujar nodos
+      pathData.ruta.forEach((nodeId, stepIndex) => {
+        const edge = pathData.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+        if (!edge) return;
+
+        const point = edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 9,
+          color: "#2ecc71",
+          fillColor: "#27ae60",
+          fillOpacity: 1
+        })
+          .bindTooltip(`Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+
+      return;
+    }
+
+    // =========================================================
+    // 8. Escenario B — modo top_rutas con FLECHAS
+    // =========================================================
+    const routeColors = [
+      "#7639e6ff",
+      "#457b9d",
+      "#2a9d8f",
+      "#f4a261",
+      "#ceef28ff",
+      "#1d3557"
+    ];
+
+    pathData.mejores_rutas.forEach((rutaObj, idx) => {
+      const color = routeColors[idx % routeColors.length];
+
+      rutaObj.aristas.forEach(edge => {
+        const A = edge.centroid_a;
+        const B = edge.centroid_b;
+
+        L.polyline([[A[0], A[1]], [B[0], B[1]]], {
+          color: color,
+          weight: 6,
+          opacity: 1
+        })
+          .addTo(window.routeLayer)
+          .arrowheads({
+            size: '14px',
+            frequency: 'end',
+            fill: true
+          });
+      });
+
+      // nodos
+      rutaObj.ruta.forEach((nodeId, stepIndex) => {
+        const edge = rutaObj.aristas.find(e =>
+          e.cluster_a === nodeId || e.cluster_b === nodeId
+        );
+        if (!edge) return;
+
+        const point = edge.cluster_a === nodeId ? edge.centroid_a : edge.centroid_b;
+
+        L.circleMarker([point[0], point[1]], {
+          radius: 8,
+          color: color,
+          fillColor: color,
+          fillOpacity: 1
+        })
+          .bindTooltip(`Ruta ${idx + 1}<br>Paso ${stepIndex}<br>Nodo ${nodeId}`)
+          .addTo(window.routeLayer);
+      });
+    });
 
   } catch (err) {
     console.error("Error en drawMSTLines:", err);
@@ -2094,7 +2391,7 @@ async function displayBellmanResult(km, cantidad_Grupo, gravedad, nodoOrigen, no
           <thead>
             <tr>
               <th>Tramo</th>
-              <th>Nodo</th>
+              <th>Nodo origen</th>
               <th>Tipo de camino</th>
               <th>Peso sanitario</th>
               <th>Distancia (km) (+)</th>
